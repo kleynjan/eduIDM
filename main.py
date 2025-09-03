@@ -4,7 +4,7 @@ import uuid
 from datetime import datetime
 from typing import Dict, Any, Optional
 from nicegui import app, ui, run
-from storage import load_storage, save_storage, find_guest_group_by_hash, find_group_by_id
+from storage import load_storage, save_storage, find_invitation_by_hash, find_group_by_id
 from oidc import (
     get_auth_url, get_access_token, get_userinfo, is_logged_in,
     initialize_oidc_state, get_oidc_error, clear_oidc_error
@@ -62,14 +62,16 @@ def update_state_from_hash(hash_param: str = None):
 
     if current_hash:
         logger.debug(f"Processing hash: {current_hash}")
-        guest_group = find_guest_group_by_hash(storage_data, current_hash)
-        if guest_group:
-            logger.info(f"Found guest group for hash {current_hash}: guest_id={guest_group.get('guest_id')}")
-            group = find_group_by_id(storage_data, guest_group.get('group_id'))
+        invitation = find_invitation_by_hash(storage_data, current_hash)
+        if invitation:
+            logger.info(f"Found invitation for hash {current_hash}: guest_id={invitation.get('guest_id')}")
+            group = find_group_by_id(storage_data, invitation.get('group_id'))
             if group:
                 group_name = group.get('name', 'Unknown Group')
                 state['group_name'] = group_name
-                logger.info(f"Updated group name to: {group_name}")
+                state['redirect_url'] = group.get('redirect_url', 'https://canvas.uva.nl/')
+                state['redirect_text'] = group.get('redirect_text', 'Canvas (UvA)')
+                logger.info(f"Updated group info: {group_name}, redirect: {state['redirect_text']}")
             state['hash'] = current_hash
             state['steps_completed']['code_entered'] = True
             logger.info(f"Hash validation successful, code_entered step marked as completed")
@@ -87,8 +89,8 @@ def handle_hash_submit():
     if hash_value:
         # Validate hash exists in storage
         storage_data = load_storage()
-        guest_group = find_guest_group_by_hash(storage_data, hash_value)
-        if guest_group:
+        invitation = find_invitation_by_hash(storage_data, hash_value)
+        if invitation:
             logger.info(f"Hash validation successful for: {hash_value}")
             state['hash'] = hash_value
             state['steps_completed']['code_entered'] = True
@@ -100,6 +102,7 @@ def handle_hash_submit():
             ui.notify('Ongeldige uitnodigingscode', type='negative')
     else:
         logger.warning("Empty hash value submitted")
+
 
 def handle_eduid_login():
     """Handle eduID login via OIDC"""
@@ -127,6 +130,36 @@ def handle_eduid_login():
         error = get_oidc_error(session_state)
         logger.error(f"Failed to generate authorization URL. Error: {error}")
         ui.notify(f'OIDC Error: {error}' if error else 'Failed to generate authorization URL', type='negative')
+
+def scim_provisioning():
+    """Handle SCIM provisioning dialog and operations"""
+    logger.info("Starting SCIM provisioning process")
+
+    # Get session state
+    session_state = app.storage.user[SERVER_SESSION_KEY]
+    state = session_state['state']
+
+    # Get invitation and userinfo
+    storage_data = load_storage()
+    invitation = find_invitation_by_hash(storage_data, state['hash']) if state['hash'] else None
+    userinfo = state.get('eduid_userinfo', {})
+
+    if not invitation or not userinfo:
+        logger.error("Cannot perform SCIM provisioning: missing invitation or userinfo")
+        return
+
+    logger.debug("Displaying SCIM provisioning dialog")
+
+    def close_scim_dialog():
+        state['show_scim_dialog'] = False
+        logger.info("SCIM provisioning dialog closed by user")
+
+    with ui.dialog(value=True) as scim_dialog, ui.card():
+        ui.label('SCIM provisioning naar backend systemen:').classes('text-lg font-bold mb-2')
+        ui.label(f'guest_id: {invitation.get("guest_id", "N/A")}')
+        ui.label(f'eduID userId: {userinfo.get("sub", "N/A")}')
+        ui.label(f'group: {state["group_name"]}')
+        ui.button('OK', on_click=lambda: (close_scim_dialog(), scim_dialog.close())).classes('mt-4')
 
 def complete_oidc_flow():
     """Complete OIDC flow after successful authentication"""
@@ -158,33 +191,29 @@ def complete_oidc_flow():
         if current_hash:
             logger.debug(f"Updating storage for hash: {current_hash}")
             storage_data = load_storage()
-            guest_group = find_guest_group_by_hash(storage_data, current_hash)
-            if guest_group and not guest_group.get('datetime_accepted'):
-                guest_group['datetime_accepted'] = datetime.utcnow().isoformat() + 'Z'
-                logger.info(f"Set acceptance timestamp for guest_id: {guest_group.get('guest_id')}")
+            invitation = find_invitation_by_hash(storage_data, current_hash)
+            if invitation and not invitation.get('datetime_accepted'):
+                invitation['datetime_accepted'] = datetime.utcnow().isoformat() + 'Z'
+                logger.info(f"Set acceptance timestamp for guest_id: {invitation.get('guest_id')}")
 
                 # Store eduID attributes in guest record
                 for guest in storage_data.get('guests', []):
-                    if guest.get('guest_id') == guest_group.get('guest_id'):
-                        guest['eduid_props'] = userinfo
-                        logger.info(f"Stored eduID properties for guest_id: {guest.get('guest_id')}")
+                    if guest.get('guest_id') == invitation.get('guest_id'):
+                        # Extract eduperson_principal_name and store as eppn
+                        userinfo_copy = userinfo.copy()
+                        eppn = userinfo_copy.pop('eduperson_principal_name', '')
+                        guest['eppn'] = eppn
+                        guest['eduid_props'] = userinfo_copy
+                        logger.info(f"Stored eduID properties for guest_id: {guest.get('guest_id')}, eppn: {eppn}")
                         break
 
                 save_storage(storage_data)
                 state['steps_completed']['completed'] = True
+                # Set flag to show SCIM dialog on accept page
+                state['show_scim_dialog'] = True
                 logger.info("OIDC flow completed successfully, all steps marked as done")
-
-                # Show SCIM provisioning popup
-                logger.debug("Displaying SCIM provisioning dialog")
-                with ui.dialog() as dialog, ui.card():
-                    ui.label('SCIM provisioning naar backend systemen:').classes('text-lg font-bold mb-2')
-                    ui.label(f'guest_id: {guest_group.get("guest_id", "N/A")}')
-                    ui.label(f'eduID userId: {userinfo.get("sub", "N/A")}')
-                    ui.label(f'group: {state["group_name"]}')
-                    ui.button('OK', on_click=dialog.close).classes('mt-4')
-                dialog.open()
             else:
-                logger.warning(f"Guest group already accepted or not found for hash: {current_hash}")
+                logger.warning(f"Invitation already accepted or not found for hash: {current_hash}")
         else:
             logger.warning("No current hash found in user state during OIDC completion")
     else:
@@ -281,13 +310,24 @@ def accept_invitation(hash_param: str = None):
             if state['steps_completed']['attributes_verified']:
                 with ui.column().classes('mt-2'):
                     ui.label('✓ Uw eduID is nu gekoppeld!').classes('text-green-600 mb-2')
-                    ui.link('Klik hier om in te loggen op Canvas', 'https://canvas.uva.nl/',
-                            new_tab=True).classes('bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600')
+                    # Use direct values instead of binding for the link
+                    redirect_url = state.get('redirect_url', 'https://canvas.uva.nl/')
+                    redirect_text = state.get('redirect_text', 'Canvas (UvA)')
+                    ui.link(f'Klik hier om in te loggen op {redirect_text}', redirect_url, new_tab=True).classes(
+                        'bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600')
             else:
                 ui.label('Voltooi eerst de vorige stappen').classes('text-gray-500 mt-2')
 
         create_step_card(4, '4. Gefeliciteerd, uw eduID is nu gekoppeld.',
                          state['steps_completed']['completed'], step4_content)
+
+        # Show SCIM provisioning dialog if flag is set
+        if state.get('show_scim_dialog'):
+            scim_provisioning()
+
+        # Debug: Check if we should show SCIM dialog
+        logger.debug(f"SCIM dialog flag: {state.get('show_scim_dialog')}")
+        logger.debug(f"Steps completed: {state['steps_completed']}")
 
 @ui.page('/oidc_callback')
 def oidc_callback(code: str = None, error: str = None):

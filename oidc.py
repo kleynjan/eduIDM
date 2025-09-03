@@ -179,16 +179,6 @@ def is_logged_in(session_state: Dict[str, Any]) -> bool:
         session_state['oidc'].get('access_token') is not None
     )
 
-def logout(session_state: Dict[str, Any]):
-    """Clear OIDC session data"""
-    if 'oidc' in session_state:
-        session_state['oidc'] = {
-            'code_verifier': None,
-            'code_challenge': None,
-            'access_token': None,
-            'userinfo': None,
-            'error': None
-        }
 
 def get_oidc_error(session_state: Dict[str, Any]) -> Optional[str]:
     """Get current OIDC error if any"""
