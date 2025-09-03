@@ -1,6 +1,6 @@
 {
-    "CLIENT_ID": "APP-XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
-    "CLIENT_SECRET": "—your-secret—",
-    "DOTWELLKNOWN": "https://proxy.sram.surf.nl/.well-known/openid-configuration",
-    "REDIRECT_URI": "https://localhost:8080/oidc_callback"
+    "CLIENT_ID": "eduinvite.nl",
+    "CLIENT_SECRET": "9VbgDnwdqQDhlntsWy9e",
+    "DOTWELLKNOWN": "https://connect.test.surfconext.nl/.well-known/openid-configuration",
+    "REDIRECT_URI": "http://localhost:8080/oidc_callback"
 }

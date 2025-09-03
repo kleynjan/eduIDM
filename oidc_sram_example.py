@@ -142,4 +142,5 @@ def private():
 
 # run the app and make sure we are in debug mode
 if __name__ == '__main__':
-    app.run(host='127.0.0.1', port=8080, debug=True, ssl_context='adhoc')
+    # app.run(host='127.0.0.1', port=8080, debug=True, ssl_context='adhoc')
+    app.run(host='127.0.0.1', port=8080, debug=True)
