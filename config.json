@@ -1,0 +1,6 @@
+{
+    "CLIENT_ID": "APP-XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
+    "CLIENT_SECRET": "—your-secret—",
+    "DOTWELLKNOWN": "https://proxy.sram.surf.nl/.well-known/openid-configuration",
+    "REDIRECT_URI": "https://localhost:8080/oidc_callback"
+}
