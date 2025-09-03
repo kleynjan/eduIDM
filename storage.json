@@ -1,59 +1,25 @@
-{   
-    "users": [
-        {
-            "id": "1e22a366-66ef-4dab-83fe-4362e62eabe2",
-            "surname": "Kleynjan",
-            "given_name": "Peter",
-            "username": "Peter K",
-            "eduid_nameid": "some_eduid_nameid",
-            "mail": "peter.kleynjan@quantis.nl"
-        }
-    ],
-    "admin_roles": [
-        { 
-            "user_id": "1e22a366-66ef-4dab-83fe-4362e62eabe2",
-            "group_id": "70e90d16-8b09-4241-899e-eb6334309116",
-            "admin_role": "superuser"
-        }
-    ],
+{
     "groups": [
         {
             "id": "70e90d16-8b09-4241-899e-eb6334309116",
-            "name": "UPvA",
-            "mail_template_file_html": "upva_invite_mail.html",
-            "mail_template_file_txt": "upva_invite_mail.txt",
-            "idin_required": false,
-            "mfa_required": false,
-            "can_edit_mail_address": true,
-            "validity_days": 30
+            "name": "UPvA"
         }
     ],
     "guests": [
         {
             "guest_id": "kleijnp",
-            "surname": "Kleynjan",
-            "given_name": "Peter",
-            "mail_address_preferred": "p.kleijnjan@uva.nl",
-            "eduid_nameid": "some_eduid_nameid",
-            "eduid_surname": "Kleijnjan",
-            "eduid_given_name": "Peter",
-            "eduid_mail_address": "peter.kleynjan@quantis.nl",
-            "verification_status": {
-                "verify_idin": false,
-                "verify_institution": true,
-                "verify_mfa": true
-            }
+            "eduid_props": {}
         },
-        {   "guest_id": "janedoe"
+        {
+            "guest_id": "janedoe"
         }
     ],
     "guest_groups": [
         {
             "id": "fa067a39-9dd2-4e3a-8139-f53d26057916",
             "group_id": "70e90d16-8b09-4241-899e-eb6334309116",
-            "mail_address_invited": "p.kleijnjan@uva.nl",
             "datetime_invited": "2025-08-23T15:22:11.000Z",
-            "datetime_accepted": "2025-09-01T18:25:43.511Z"
+            "datetime_accepted": "2025-09-03T09:19:14.965307Z"
         }
     ]
 }
