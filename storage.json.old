@@ -1,0 +1,68 @@
+{
+    "groups": [
+        {
+            "id": "70e90d16-8b09-4241-899e-eb6334309117",
+            "name": "UPvA",
+            "redirect_url": "https://canvas.uva.nl/",
+            "redirect_text": "Canvas (UvA)"
+        }
+    ],
+    "guests": [
+        {
+            "guest_id": "kleijnp",
+            "eppn": "3f7a3e0c-e10a-4af5-b2b0-023b7bb37775@eduid.nl",
+            "eduid_props": {
+                "acr": "urn:oasis:names:tc:SAML:2.0:ac:classes:Password",
+                "eduperson_affiliation": [
+                    "affiliate"
+                ],
+                "eduperson_scoped_affiliation": [
+                    "affiliate@eduid.nl"
+                ],
+                "email": "peter.kleynjan@quantis.nl",
+                "email_verified": true,
+                "family_name": "Kleynjan-Test",
+                "given_name": "Peter",
+                "name": "Peter Kleynjan-Test",
+                "schac_home_organization": "eduid.nl",
+                "sub": "87e49d9000fe0240b2c806f34361711e97f45799",
+                "uids": [
+                    "3f7a3e0c-e10a-4af5-b2b0-023b7bb37775"
+                ],
+                "updated_at": 1756935556
+            }
+        },
+        {
+            "guest_id": "janedoe"
+        },
+        {
+            "guest_id": "kleijnp123"
+        },
+        {
+            "guest_id": "test123"
+        }
+    ],
+    "invitations": [
+        {
+            "invitation_id": "fa067a39-9dd2-4e3a-8139-f53d26057900",
+            "guest_id": "kleijnp",
+            "group_id": "70e90d16-8b09-4241-899e-eb6334309117",
+            "datetime_invited": "2025-08-23T15:22:11.000Z",
+            "datetime_accepted": "2025-09-03T21:39:17.286897Z"
+        },
+        {
+            "invitation_id": "08c9b60e-484a-44f8-a5b1-3db421a85c8c",
+            "guest_id": "kleijnp123",
+            "group_id": "70e90d16-8b09-4241-899e-eb6334309117",
+            "invitation_mail_address": "peter.kleynjan@quantis.nl",
+            "datetime_invited": "2025-09-04T09:42:57.543750Z"
+        },
+        {
+            "invitation_id": "23afbaec-3e10-464c-b871-13e30702617d",
+            "guest_id": "test123",
+            "group_id": "70e90d16-8b09-4241-899e-eb6334309117",
+            "invitation_mail_address": "peter@test.nl",
+            "datetime_invited": "2025-09-04T09:46:04.492290Z"
+        }
+    ]
+}
