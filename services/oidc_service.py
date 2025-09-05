@@ -45,16 +45,13 @@ def complete_oidc_flow():
                 invitation['datetime_accepted'] = datetime.utcnow().isoformat() + 'Z'
                 logger.info(f"Set acceptance timestamp for guest_id: {invitation.get('guest_id')}")
 
-                # Store eduID attributes in guest record
-                for guest in storage_data.get('guests', []):
-                    if guest.get('guest_id') == invitation.get('guest_id'):
-                        # Extract eduperson_principal_name and store as eppn
-                        userinfo_copy = userinfo.copy()
-                        eppn = userinfo_copy.pop('eduperson_principal_name', '')
-                        guest['eppn'] = eppn
-                        guest['eduid_props'] = userinfo_copy
-                        logger.info(f"Stored eduID properties for guest_id: {guest.get('guest_id')}, eppn: {eppn}")
-                        break
+                # Store eduID attributes directly in invitation record
+                # Extract eduperson_principal_name and store as eppn
+                userinfo_copy = userinfo.copy()
+                eppn = userinfo_copy.pop('eduperson_principal_name', '')
+                invitation['eppn'] = eppn
+                invitation['eduid_props'] = userinfo_copy
+                logger.info(f"Stored eduID properties for guest_id: {invitation.get('guest_id')}, eppn: {eppn}")
 
                 save_storage(storage_data)
                 state['steps_completed']['completed'] = True

@@ -4,9 +4,10 @@ import oidc
 from utils.logging import setup_logging, logger
 
 # register routes
-import routes.invitations
+import routes.api
 import routes.accept
 import routes.oidc_endpoints
+import routes.invitations
 
 # Configure logging
 setup_logging(

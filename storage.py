@@ -9,7 +9,7 @@ def load_storage() -> Dict[str, Any]:
         with open('storage.json', 'r', encoding='utf-8') as f:
             return json.load(f)
     except FileNotFoundError:
-        return {"groups": [], "guests": [], "invitations": []}
+        return {"groups": [], "invitations": []}
 
 def save_storage(data: Dict[str, Any]) -> None:
     """Save dictionary back to storage.json"""
@@ -30,30 +30,33 @@ def find_group_by_id(storage_data: Dict[str, Any], group_id: str) -> Optional[Di
             return group
     return None
 
+def find_group_by_name(storage_data: Dict[str, Any], group_name: str) -> Optional[Dict[str, Any]]:
+    """Find group by group name"""
+    for group in storage_data.get('groups', []):
+        if group.get('name') == group_name:
+            return group
+    return None
+
 def create_invitation(guest_id: str, group_id: str, invitation_mail_address: str) -> str:
     """Create a new invitation and return the invitation_id"""
     storage_data = load_storage()
 
     # Generate new invitation ID
-    invitation_id = str(uuid.uuid4())
+    invitation_id = str(uuid.uuid4()).replace('-', '')
 
-    # Create invitation record
+    # Create invitation record with empty eppn and eduid_props (will be filled when accepted)
     invitation = {
         "invitation_id": invitation_id,
         "guest_id": guest_id,
         "group_id": group_id,
         "invitation_mail_address": invitation_mail_address,
-        "datetime_invited": datetime.utcnow().isoformat() + 'Z'
+        "datetime_invited": datetime.utcnow().isoformat() + 'Z',
+        "eppn": "",
+        "eduid_props": {}
     }
 
     # Add to storage
     storage_data.setdefault('invitations', []).append(invitation)
-
-    # Ensure guest exists in guests list
-    guests = storage_data.setdefault('guests', [])
-    guest_exists = any(guest.get('guest_id') == guest_id for guest in guests)
-    if not guest_exists:
-        guests.append({"guest_id": guest_id})
 
     save_storage(storage_data)
     return invitation_id

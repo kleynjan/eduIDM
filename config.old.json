@@ -1,6 +1,0 @@
-{
-    "CLIENT_ID": "eduinvite.nl",
-    "CLIENT_SECRET": "9VbgDnwdqQDhlntsWy9e",
-    "DOTWELLKNOWN": "https://connect.test.surfconext.nl/.well-known/openid-configuration",
-    "REDIRECT_URI": "http://localhost:8080/oidc_callback"
-}
