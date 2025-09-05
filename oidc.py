@@ -5,8 +5,15 @@ import os
 import re
 import requests
 from typing import Dict, Any, Optional, Tuple
-from nicegui import app
-from utils.logging import logger
+
+# Module-level logger - will be initialized by calling code
+logger = None
+
+
+def initialize_oidc_logger(logger_instance):
+    """Initialize OIDC module with logger instance"""
+    global logger
+    logger = logger_instance
 
 def get_code_challenge() -> Tuple[str, str]:
     """Generate PKCE code verifier and challenge"""

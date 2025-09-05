@@ -34,3 +34,4 @@
 # returns a hash string that can be sent to invitee (eg, by mail) and is then used to claim invitation
 
 
+# Add a RESTFUL API at /api/invitations and /api/groups that allows a client to retrieve the current  
