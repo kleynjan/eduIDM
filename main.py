@@ -13,12 +13,9 @@ import routes.invitations
 setup_logging(
     level=logging.DEBUG,
     log_file='eduidm.log',
-    enable_console_logging=False
+    enable_console_logging=True
 )
 
-# Initialize OIDC module with logger
-oidc.initialize_oidc_logger(logger)
-
 if __name__ in {"__main__", "__mp_main__"}:
-    logger.info("Starting eduIDM application on localhost:8080")
+    logger.info("starting eduIDM on localhost:8080")
     ui.run(host='localhost', port=8080, storage_secret="AbraXabra2452", title='eduIDM', show=False)

@@ -13,8 +13,7 @@ TITLE = "Invitations"
 
 @ui.page('/invitations')
 def invitations_page():
-    """Handle the guests management page"""
-    logger.info("Guests page accessed")
+    logger.debug("invitations page accessed")
 
     ui.page_title(TITLE)
 

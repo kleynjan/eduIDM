@@ -5,24 +5,7 @@ import os
 import re
 import requests
 from typing import Dict, Any, Optional, Tuple
-
-# Module-level logger - will be initialized by calling code
-logger = None
-
-
-def initialize_oidc_logger(logger_instance):
-    """Initialize OIDC module with logger instance"""
-    global logger
-    logger = logger_instance
-
-def get_code_challenge() -> Tuple[str, str]:
-    """Generate PKCE code verifier and challenge"""
-    code_verifier = base64.urlsafe_b64encode(os.urandom(40)).decode('utf-8')
-    code_verifier = re.sub('[^a-zA-Z0-9]+', '', code_verifier)
-    code_challenge = hashlib.sha256(code_verifier.encode('utf-8')).digest()
-    code_challenge = base64.urlsafe_b64encode(code_challenge).decode('utf-8')
-    code_challenge = code_challenge.replace('=', '')
-    return code_verifier, code_challenge
+from utils.logging import logger
 
 def load_oidc_config() -> Dict[str, Any]:
     """Load OIDC configuration from config.json and .well-known endpoint"""
@@ -31,7 +14,7 @@ def load_oidc_config() -> Dict[str, Any]:
             config = json.load(f)
 
         # Get .well-known configuration
-        well_known_url = config.get('DOTWELLKNOWN')
+        well_known_url = config['DOTWELLKNOWN']
         if well_known_url:
             response = requests.get(well_known_url)
             if response.status_code == 200:
@@ -42,6 +25,26 @@ def load_oidc_config() -> Dict[str, Any]:
     except Exception as e:
         print(f"Error loading OIDC config: {e}")
         return {}
+
+OIDC_CONFIG = load_oidc_config()
+
+
+def get_code_challenge() -> Tuple[str, str]:
+    """
+    Helper to generate a code_verifier and its corresponding code_challenge for PKCE.
+
+    Returns:
+        Tuple[code_verifier:str, code_challenge:str]: 
+            code_verifier is a random string that is used to generate the code challenge
+            code_challenge is an encoded string that is used to verify the identity of the client
+    """
+    code_verifier = base64.urlsafe_b64encode(os.urandom(40)).decode('utf-8')
+    code_verifier = re.sub('[^a-zA-Z0-9]+', '', code_verifier)
+    code_challenge = hashlib.sha256(code_verifier.encode('utf-8')).digest()
+    code_challenge = base64.urlsafe_b64encode(code_challenge).decode('utf-8')
+    code_challenge = code_challenge.replace('=', '')
+    return code_verifier, code_challenge
+
 
 def initialize_oidc_state(session_state: Dict[str, Any]):
     """Initialize OIDC state in session state dictionary"""
@@ -66,18 +69,17 @@ def initialize_oidc_state(session_state: Dict[str, Any]):
 def get_auth_url(session_state: Dict[str, Any]) -> Optional[str]:
     """Generate authorization URL for OIDC flow"""
     try:
-        config = load_oidc_config()
         initialize_oidc_state(session_state)
 
-        auth_endpoint = config.get('authorization_endpoint')
+        auth_endpoint = OIDC_CONFIG['authorization_endpoint']
         if not auth_endpoint:
             return None
 
         params = {
             "response_type": "code",
-            "client_id": config.get('CLIENT_ID'),
+            "client_id": OIDC_CONFIG['CLIENT_ID'],
             "scope": "openid profile email",
-            "redirect_uri": config.get('REDIRECT_URI'),
+            "redirect_uri": OIDC_CONFIG['REDIRECT_URI'],
             "code_challenge": session_state['oidc']['code_challenge'],
             "code_challenge_method": "S256",
         }
@@ -99,9 +101,7 @@ def get_auth_url(session_state: Dict[str, Any]) -> Optional[str]:
 def get_access_token(code: str, session_state: Dict[str, Any]) -> Optional[Dict[str, Any]]:
     """Exchange authorization code for access token"""
     try:
-        config = load_oidc_config()
-
-        token_endpoint = config.get('token_endpoint')
+        token_endpoint = OIDC_CONFIG['token_endpoint']
         if not token_endpoint:
             return None
 
@@ -121,9 +121,9 @@ def get_access_token(code: str, session_state: Dict[str, Any]) -> Optional[Dict[
         token_params = {
             'grant_type': 'authorization_code',
             'code': code,
-            'client_id': config.get('CLIENT_ID'),
-            'client_secret': config.get('CLIENT_SECRET'),
-            'redirect_uri': config.get('REDIRECT_URI'),
+            'client_id': OIDC_CONFIG['CLIENT_ID'],
+            'client_secret': OIDC_CONFIG['CLIENT_SECRET'],
+            'redirect_uri': OIDC_CONFIG['REDIRECT_URI'],
             'code_verifier': code_verifier,
         }
 
@@ -155,8 +155,7 @@ def get_userinfo(session_state: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         if not is_logged_in(session_state):
             return None
 
-        config = load_oidc_config()
-        userinfo_endpoint = config.get('userinfo_endpoint')
+        userinfo_endpoint = OIDC_CONFIG['userinfo_endpoint']
         if not userinfo_endpoint:
             return None
 
