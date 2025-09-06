@@ -1,19 +1,24 @@
 import json
 import uuid
+import os
 from datetime import datetime
 from typing import Dict, Any, Optional, List
+
+# Get the directory where this module is located
+_MODULE_DIR = os.path.dirname(os.path.abspath(__file__))
+_STORAGE_FILE = os.path.join(_MODULE_DIR, 'storage.json')
 
 def load_storage() -> Dict[str, Any]:
     """Load storage.json as a dictionary"""
     try:
-        with open('storage.json', 'r', encoding='utf-8') as f:
+        with open(_STORAGE_FILE, 'r', encoding='utf-8') as f:
             return json.load(f)
     except FileNotFoundError:
         return {"groups": [], "invitations": []}
 
 def save_storage(data: Dict[str, Any]) -> None:
     """Save dictionary back to storage.json"""
-    with open('storage.json', 'w', encoding='utf-8') as f:
+    with open(_STORAGE_FILE, 'w', encoding='utf-8') as f:
         json.dump(data, f, indent=4, ensure_ascii=False)
 
 def find_invitation_by_hash(storage_data: Dict[str, Any], hash_id: str) -> Optional[Dict[str, Any]]:

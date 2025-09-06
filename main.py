@@ -5,8 +5,8 @@ from utils.logging import setup_logging, logger
 # register routes
 import routes.api
 import routes.accept
-import routes.auth
 import routes.invitations
+import eduid_oidc.oidc_callback
 
 # Configure logging
 setup_logging(

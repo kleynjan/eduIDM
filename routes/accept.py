@@ -4,15 +4,28 @@ Handles the invitation acceptance flow.
 """
 
 from nicegui import ui
-from session_manager import session_manager
-from ui.components import create_step_card
+
+from eduid_oidc.app_interface import start_eduid_login
 from services.scim_service import scim_provisioning
+from session_manager import session_manager
+from services.storage import find_invitation_by_hash, load_storage
 from utils.logging import logger
+
+def create_step_card(step_num: int, title: str, is_completed: bool, content_func):
+    """Create a step card with conditional content"""
+    status_color = 'positive' if is_completed else 'grey'
+    status_icon = 'check_circle' if is_completed else 'radio_button_unchecked'
+
+    with ui.card().classes('w-full mb-4'):
+        with ui.row().classes('items-center w-full'):
+            ui.icon(status_icon, color=status_color).classes('text-2xl mr-4')
+            with ui.column().classes('flex-grow'):
+                ui.label(title).classes('text-lg font-semibold')
+                content_func()
 
 
 def handle_hash_submit():
     """Handle hash input submission"""
-    from storage import load_storage, find_invitation_by_hash
 
     state = session_manager.state
     hash_value = state['hash_input'].strip()
@@ -27,7 +40,6 @@ def handle_hash_submit():
             state['hash'] = hash_value
             state['steps_completed']['code_entered'] = True
             session_manager.update_state_from_hash(hash_value)
-            logger.info(f"Navigating to /accept/{hash_value}")
             ui.navigate.to(f'/accept/{hash_value}')
         else:
             logger.warning(f"Invalid hash submitted: {hash_value}")
@@ -38,34 +50,32 @@ def handle_hash_submit():
 
 def handle_eduid_login():
     """Handle eduID login via OIDC"""
-    from eduid_auth import start_eduid_login, clear_oidc_error
 
     logger.info("Starting eduID login process via OIDC")
 
     # Get session state
     session_state = session_manager.session_state
 
-    # Clear any previous errors
-    logger.debug("Clearing previous OIDC errors")
-    clear_oidc_error(session_state)
-
     try:
-        # Get authorization URL
+        # Get authorization URL and PKCE parameters
         logger.debug("Requesting authorization URL")
-        auth_url = start_eduid_login(session_state)
+        auth_url, code_verifier, code_challenge = start_eduid_login()
+
+        # Store only the code_verifier temporarily for the callback
+        session_state['oidc_code_verifier'] = code_verifier
+
         logger.info(f"Authorization URL generated successfully, redirecting to: {auth_url}")
         # Redirect to OIDC provider
         ui.navigate.to(auth_url, new_tab=False)
     except Exception as e:
         error_msg = str(e)
         logger.error(f"Failed to generate authorization URL. Error: {error_msg}")
-        session_state['oidc']['error'] = error_msg
         ui.notify(f'OIDC Error: {error_msg}', type='negative')
 
 
 @ui.page('/accept')
 @ui.page('/accept/{hash_param}')
-def accept_invitation(hash_param: str = None):
+def accept_invitation(hash_param: str = ""):
     """Handle the accept invitation route"""
     logger.info(f"Accept invitation page accessed with hash_param: {hash_param}")
 

@@ -4,7 +4,7 @@ Handles guest invitation management and administration.
 """
 
 from nicegui import ui
-from storage import (
+from services.storage import (
     create_invitation, get_all_invitations_with_details, get_all_groups
 )
 from utils.logging import logger
@@ -54,7 +54,7 @@ def invitations_page():
         ui.button('Invite...', on_click=lambda: show_invite_dialog(page_state)).classes('mb-4 bg-blue-500 text-white')
 
         # Store reference to refresh function for later use
-        page_state['refresh_table'] = invitations_table.refresh
+        page_state['refresh_function'] = invitations_table.refresh
 
 
 def show_invite_dialog(page_state):
@@ -166,8 +166,8 @@ def show_confirmation_dialog(group_name, email_address, invitation_id, page_stat
         confirmation_dialog.close()
 
         # Refresh the table using the stored refresh function
-        if 'refresh_table' in page_state:
-            page_state['refresh_table']()
+        if 'refresh_function' in page_state:
+            page_state['refresh_function']()
 
     with ui.dialog(value=True) as confirmation_dialog, ui.card().classes('w-96'):
         ui.label('Uitnodiging Aangemaakt').classes('text-xl font-bold mb-4')

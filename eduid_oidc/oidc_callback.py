@@ -3,12 +3,12 @@
 
 from nicegui import ui
 from session_manager import session_manager
-from eduid_auth import complete_eduid_login, process_eduid_completion, get_oidc_error, clear_oidc_error
+from .app_interface import complete_eduid_login, process_eduid_completion
 from utils.logging import logger
 
 
 @ui.page('/oidc_callback')
-def oidc_callback(code: str = None, error: str = None):
+def oidc_callback(code: str = "", error: str = ""):
     """Handle OIDC callback from authorization server"""
     logger.info(f"OIDC callback received - code: {'present' if code else 'missing'}, error: {error}")
 
@@ -41,13 +41,21 @@ def oidc_callback(code: str = None, error: str = None):
         session_state = session_manager.session_state
 
         try:
+            # Get the code_verifier from session
+            code_verifier = session_state.get('oidc_code_verifier')
+            if not code_verifier:
+                raise Exception("No code_verifier found - login session may have expired")
+
             # Complete eduID login
             logger.debug("Completing eduID login flow")
-            complete_eduid_login(code, session_state)
+            token_data, userinfo = complete_eduid_login(code, code_verifier)
+
+            # Clean up temporary OIDC state
+            session_state.pop('oidc_code_verifier', None)
 
             # Process completion and update application state
             logger.debug("Processing eduID completion")
-            process_eduid_completion(session_state, session_manager.state)
+            process_eduid_completion(userinfo, session_manager.state)
 
             logger.info("eduID authentication completed successfully")
 
@@ -64,7 +72,6 @@ def oidc_callback(code: str = None, error: str = None):
         except Exception as e:
             error_msg = str(e)
             logger.error(f"eduID authentication failed: {error_msg}")
-            session_state['oidc']['error'] = error_msg
 
             ui.label('Authentication Failed').classes('text-xl font-bold text-red-600 mb-4')
             ui.label(f'Error: {error_msg}').classes('text-lg mb-4')
@@ -75,25 +82,14 @@ def oidc_callback(code: str = None, error: str = None):
 @ui.page('/oidc_error')
 def oidc_error_page():
     """Display OIDC error page"""
-    # Get session state
-    session_state = session_manager.session_state
-    error = get_oidc_error(session_state)
-    logger.error(f"OIDC error page accessed with error: {error}")
+    logger.error("OIDC error page accessed")
 
     ui.page_title('OIDC Authentication Error')
 
     with ui.column().classes('max-w-2xl mx-auto p-6'):
         ui.label('Authentication Error').classes('text-2xl font-bold text-red-600 mb-4')
-
-        if error:
-            ui.label(f'Error: {error}').classes('text-lg mb-4')
-        else:
-            ui.label('An unknown error occurred during authentication.').classes('text-lg mb-4')
-
+        ui.label('An error occurred during authentication.').classes('text-lg mb-4')
         ui.label('Please try again or contact support if the problem persists.').classes('mb-4')
 
-        with ui.row().classes('gap-4'):
-            ui.button('Try Again', on_click=lambda: (logger.info("User clicked 'Try Again' on error page"),
-                      ui.navigate.to('/accept'))).classes('bg-blue-500 text-white')
-            ui.button('Clear Error', on_click=lambda: (logger.info("User clicked 'Clear Error'"), clear_oidc_error(session_state),
-                      ui.navigate.to('/accept'))).classes('bg-gray-500 text-white')
+        ui.button('Try Again', on_click=lambda: (logger.info("User clicked 'Try Again' on error page"),
+                  ui.navigate.to('/accept'))).classes('bg-blue-500 text-white')

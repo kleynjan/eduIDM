@@ -6,7 +6,7 @@ Provides a singleton session manager that works with NiceGUI reactive binding.
 import uuid
 from typing import Dict, Any
 from nicegui import app
-from storage import load_storage, find_invitation_by_hash, find_group_by_id
+from services.storage import load_storage, find_invitation_by_hash, find_group_by_id
 from utils.logging import logger
 
 

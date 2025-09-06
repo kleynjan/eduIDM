@@ -5,7 +5,7 @@ Handles SCIM provisioning dialog and operations.
 
 from nicegui import ui
 from session_manager import session_manager
-from storage import load_storage, find_invitation_by_hash
+from services.storage import load_storage, find_invitation_by_hash
 from utils.logging import logger
 
 

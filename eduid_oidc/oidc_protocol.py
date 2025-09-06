@@ -55,7 +55,7 @@ def build_auth_url(
         "code_challenge_method": "S256",
     }
 
-    param_string = "&".join([f"{k}={requests.utils.quote(str(v))}" for k, v in params.items()])
+    param_string = "&".join([f"{k}={requests.utils.quote(str(v))}" for k, v in params.items()])  # type: ignore
     return f"{authorization_endpoint}?{param_string}"
 
 

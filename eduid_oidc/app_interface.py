@@ -1,0 +1,131 @@
+# eduID integratie: OIDC -> app
+
+import json
+from datetime import datetime
+from typing import Dict, Any, Optional
+from .oidc_protocol import generate_pkce, build_auth_url, exchange_code, get_userinfo, load_well_known_config
+from services.storage import load_storage, save_storage, find_invitation_by_hash
+from utils.logging import logger
+
+
+def load_eduid_config() -> Dict[str, Any]:
+    with open('config.json', 'r') as f:
+        config = json.load(f)
+
+    # load .well-known configuration
+    well_known_config = load_well_known_config(config['DOTWELLKNOWN'])
+    config.update(well_known_config)
+
+    return config
+
+
+def start_eduid_login() -> tuple[str, str, str]:
+    """
+    Initiate eduID OIDC login flow.
+
+    Returns:
+        Tuple of (authorization_url, code_verifier, code_challenge)
+    """
+    logger.info("Starting eduID login process")
+    config = load_eduid_config()
+
+    # Generate PKCE parameters
+    code_verifier, code_challenge = generate_pkce()
+    logger.debug(f"Generated PKCE with code_verifier: {code_verifier[:10]}...")
+
+    # Build authorization URL
+    auth_url = build_auth_url(
+        authorization_endpoint=config['authorization_endpoint'],
+        client_id=config['CLIENT_ID'],
+        redirect_uri=config['REDIRECT_URI'],
+        code_challenge=code_challenge
+    )
+
+    logger.info(f"Authorization URL generated successfully: {auth_url}")
+    return auth_url, code_verifier, code_challenge
+
+
+def complete_eduid_login(code: str, code_verifier: str) -> tuple[Dict[str, Any], Dict[str, Any]]:
+    """
+    Complete eduID OIDC login flow.
+
+    Args:
+        code: authorization code from callback
+        code_verifier: PKCE code verifier from start_eduid_login
+
+    Returns:
+        Tuple of (token_data, userinfo)
+    """
+    logger.info("Completing eduID OIDC flow")
+    logger.debug(f"Using code_verifier: {code_verifier[:10]}...")
+    config = load_eduid_config()
+
+    # Exchange code for token
+    logger.debug("Exchanging authorization code for access token")
+    token_data = exchange_code(
+        token_endpoint=config['token_endpoint'],
+        client_id=config['CLIENT_ID'],
+        client_secret=config['CLIENT_SECRET'],
+        redirect_uri=config['REDIRECT_URI'],
+        code=code,
+        code_verifier=code_verifier
+    )
+    logger.debug(f"Token exchange successful, token data: {token_data}")
+
+    logger.debug("Retrieving user info from eduID")
+    userinfo = get_userinfo(
+        userinfo_endpoint=config['userinfo_endpoint'],
+        token_data=token_data
+    )
+    logger.info(f"User info retrieved successfully for user: {userinfo.get('sub', '')}")
+
+    return token_data, userinfo
+
+
+def process_eduid_completion(userinfo: Dict[str, Any], user_state: Dict[str, Any]) -> None:
+    """
+    Update application state after successful eduid login.
+
+    Args:
+        userinfo: User information from eduID
+        user_state: User state dictionary from session manager
+    """
+    logger.info("Updating application state with eduID user info")
+
+    user_state['steps_completed']['eduid_login'] = True
+    user_state['eduid_userinfo'] = userinfo
+
+    # to do: check other attributes, eg affiliation, MFA -- for now mark as complete
+    user_state['steps_completed']['attributes_verified'] = True
+
+    # Update storage with completion
+    current_hash = user_state['hash']
+    if current_hash:
+        logger.debug(f"Updating storage for hash: {current_hash}")
+        storage_data = load_storage()
+        invitation = find_invitation_by_hash(storage_data, current_hash)
+        if invitation and not invitation.get('datetime_accepted'):
+            invitation['datetime_accepted'] = datetime.utcnow().isoformat() + 'Z'
+            logger.info(f"Set acceptance timestamp for guest_id: {invitation['guest_id']}")
+
+            # Store eduID attributes directly in invitation record
+            # Extract eduperson_principal_name and store as eppn
+            userinfo_copy = userinfo.copy()
+            eppn = userinfo_copy.pop('eduperson_principal_name', '')
+            invitation['eppn'] = eppn
+            invitation['eduid_props'] = userinfo_copy
+            logger.info(f"Stored eduID properties for guest_id: {invitation['guest_id']}, eppn: {eppn}")
+
+            save_storage(storage_data)
+            user_state['steps_completed']['completed'] = True
+            # Set flag to show SCIM dialog on accept page
+            user_state['show_scim_dialog'] = True
+            logger.info("eduID flow completed successfully, all steps marked as done")
+        else:
+            logger.warning(f"Invitation already accepted or not found for hash: {current_hash}")
+    else:
+        logger.warning("No current hash found in user state during eduID completion")
+
+
+# Note: These functions are no longer needed since we don't maintain OIDC state
+# The application only stores the final userinfo result
