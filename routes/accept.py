@@ -38,32 +38,29 @@ def handle_hash_submit():
 
 def handle_eduid_login():
     """Handle eduID login via OIDC"""
-    from oidc import get_auth_url, initialize_oidc_state, get_oidc_error, clear_oidc_error
+    from eduid_auth import start_eduid_login, clear_oidc_error
 
     logger.info("Starting eduID login process via OIDC")
 
     # Get session state
     session_state = session_manager.session_state
 
-    # Initialize OIDC state
-    logger.debug("Initializing OIDC state")
-    initialize_oidc_state(session_state)
-
     # Clear any previous errors
     logger.debug("Clearing previous OIDC errors")
     clear_oidc_error(session_state)
 
-    # Get authorization URL
-    logger.debug("Requesting authorization URL")
-    auth_url = get_auth_url(session_state)
-    if auth_url:
+    try:
+        # Get authorization URL
+        logger.debug("Requesting authorization URL")
+        auth_url = start_eduid_login(session_state)
         logger.info(f"Authorization URL generated successfully, redirecting to: {auth_url}")
         # Redirect to OIDC provider
         ui.navigate.to(auth_url, new_tab=False)
-    else:
-        error = get_oidc_error(session_state)
-        logger.error(f"Failed to generate authorization URL. Error: {error}")
-        ui.notify(f'OIDC Error: {error}' if error else 'Failed to generate authorization URL', type='negative')
+    except Exception as e:
+        error_msg = str(e)
+        logger.error(f"Failed to generate authorization URL. Error: {error_msg}")
+        session_state['oidc']['error'] = error_msg
+        ui.notify(f'OIDC Error: {error_msg}', type='negative')
 
 
 @ui.page('/accept')

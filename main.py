@@ -1,12 +1,11 @@
 import logging
 from nicegui import ui, run
-import oidc
 from utils.logging import setup_logging, logger
 
 # register routes
 import routes.api
 import routes.accept
-import routes.oidc_endpoints
+import routes.auth
 import routes.invitations
 
 # Configure logging

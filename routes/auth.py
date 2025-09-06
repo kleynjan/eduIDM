@@ -1,13 +1,9 @@
-"""
-OIDC-related routes for eduIDM application.
-Handles OIDC callback and error pages.
-"""
+# http/s endpoints for eduID OIDC: callback and error pages
+# when eduID login is completed, calls complete_eduid_login with updated session_state
 
 from nicegui import ui
 from session_manager import session_manager
-from error_handler import get_oidc_error, clear_oidc_error
-from services.oidc_service import complete_oidc_flow
-import oidc
+from eduid_auth import complete_eduid_login, process_eduid_completion, get_oidc_error, clear_oidc_error
 from utils.logging import logger
 
 
@@ -44,31 +40,36 @@ def oidc_callback(code: str = None, error: str = None):
         # Get session state
         session_state = session_manager.session_state
 
-        # Exchange code for access token
-        logger.debug("Exchanging authorization code for access token")
-        token_data = oidc.get_access_token(code, session_state)
-        if not token_data:
-            error_msg = get_oidc_error(session_state) or 'Failed to get access token'
-            logger.error(f"Token exchange failed: {error_msg}")
-            ui.label('Token Exchange Failed').classes('text-xl font-bold text-red-600 mb-4')
+        try:
+            # Complete eduID login
+            logger.debug("Completing eduID login flow")
+            complete_eduid_login(code, session_state)
+
+            # Process completion and update application state
+            logger.debug("Processing eduID completion")
+            process_eduid_completion(session_state, session_manager.state)
+
+            logger.info("eduID authentication completed successfully")
+
+            # Success - redirect back to accept page
+            ui.label('Authentication Successful!').classes('text-xl font-bold text-green-600 mb-4')
+            ui.label('Redirecting...').classes('text-lg mb-4')
+
+            # Auto-redirect after a short delay
+            current_hash = session_manager.state['hash']
+            redirect_url = f'/accept/{current_hash}' if current_hash else '/accept'
+            logger.info(f"Redirecting to: {redirect_url}")
+            ui.timer(2.0, lambda: ui.navigate.to(redirect_url), once=True)
+
+        except Exception as e:
+            error_msg = str(e)
+            logger.error(f"eduID authentication failed: {error_msg}")
+            session_state['oidc']['error'] = error_msg
+
+            ui.label('Authentication Failed').classes('text-xl font-bold text-red-600 mb-4')
             ui.label(f'Error: {error_msg}').classes('text-lg mb-4')
             ui.button('Return to Accept Page', on_click=lambda: ui.navigate.to(
                 '/accept')).classes('bg-blue-500 text-white')
-            return
-
-        logger.info("Token exchange successful, completing OIDC flow")
-        # Complete the OIDC flow
-        complete_oidc_flow()
-
-        # Success - redirect back to accept page
-        ui.label('Authentication Successful!').classes('text-xl font-bold text-green-600 mb-4')
-        ui.label('Redirecting...').classes('text-lg mb-4')
-
-        # Auto-redirect after a short delay
-        current_hash = session_manager.state.get('hash', '')
-        redirect_url = f'/accept/{current_hash}' if current_hash else '/accept'
-        logger.info(f"Redirecting to: {redirect_url}")
-        ui.timer(2.0, lambda: ui.navigate.to(redirect_url), once=True)
 
 
 @ui.page('/oidc_error')
