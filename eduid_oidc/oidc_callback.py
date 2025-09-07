@@ -54,10 +54,7 @@ def oidc_callback(code: str = "", error: str = ""):
             ui.label('Redirecting...').classes('text-lg mb-4')
 
             # Auto-redirect after a short delay
-            current_hash = session_manager.state['hash']
-            redirect_url = f'/accept/{current_hash}' if current_hash else '/accept'
-            logger.info(f"Redirecting to: {redirect_url}")
-            ui.timer(2.0, lambda: ui.navigate.to(redirect_url), once=True)
+            ui.timer(2.0, lambda: ui.navigate.to('/accept'), once=True)
 
         except Exception as e:
             error_msg = str(e)

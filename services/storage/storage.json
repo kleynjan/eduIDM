@@ -14,7 +14,7 @@
             "guest_id": "kleijnp1",
             "invitation_mail_address": "peter.kleynjan@quantis.nl",
             "datetime_invited": "2025-09-04T09:50:18.460062Z",
-            "datetime_accepted": "2025-09-06T20:59:47.721350Z",
+            "datetime_accepted": "2025-09-07T13:16:30.684490Z",
             "eppn": "3f7a3e0c-e10a-4af5-b2b0-023b7bb37775@eduid.nl",
             "eduid_props": {
                 "acr": "urn:oasis:names:tc:SAML:2.0:ac:classes:Password",
@@ -34,7 +34,7 @@
                 "uids": [
                     "3f7a3e0c-e10a-4af5-b2b0-023b7bb37775"
                 ],
-                "updated_at": 1757192387
+                "updated_at": 1757250990
             }
         }
     ]
