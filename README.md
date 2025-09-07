@@ -42,6 +42,8 @@ Ik denk dat het cruciaal is om die relatie tussen interne identiteiten en eduID'
 * Maak een python environment o.b.v. de requirements.txt. Clone het project.
 * `python main.py` om de server te starten op `http://localhost:8080/`
 
+![eduIDM screenshot](screenshot.png)
+
 ### TODO
 * POST terug naar de backend (al dan niet met SCIM). 
 * POST naar backend in aparte task onderbrengen i.v.m. retries.
