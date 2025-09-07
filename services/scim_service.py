@@ -5,7 +5,7 @@ Handles SCIM provisioning dialog and operations.
 
 from nicegui import ui
 from session_manager import session_manager
-from services.storage import load_storage, find_invitation_by_hash
+from services.storage import load_storage, find_invitation_by_code
 from utils.logging import logger
 
 
@@ -18,7 +18,7 @@ def scim_provisioning():
 
     # Get invitation and userinfo
     storage_data = load_storage()
-    invitation = find_invitation_by_hash(storage_data, state['hash']) if state['hash'] else None
+    invitation = find_invitation_by_code(storage_data, state['invite_code']) if state['invite_code'] else None
     userinfo = state.get('eduid_userinfo', {})
 
     if not invitation or not userinfo:

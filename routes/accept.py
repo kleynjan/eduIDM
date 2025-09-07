@@ -4,8 +4,8 @@ from nicegui import ui
 
 from eduid_oidc.app_interface import start_eduid_login
 from services.scim_service import scim_provisioning
-from session_manager import session_manager
-from services.storage import find_invitation_by_hash, load_storage
+from services.session_manager import session_manager
+from services.storage import find_invitation_by_code, find_group_by_id, load_storage
 from utils.logging import logger
 
 def create_step_card(step_num: int, title: str, is_completed: bool, content_func):
@@ -21,28 +21,49 @@ def create_step_card(step_num: int, title: str, is_completed: bool, content_func
                 content_func()
 
 
-def handle_hash_submit():
-    """Handle hash input submission"""
-
+def handle_invite_code_submit():
     state = session_manager.state
-    hash_value = state['hash_input'].strip()
-    logger.info(f"Hash submission attempt with value: {hash_value}")
+    invite_code_value = state['invite_code_input'].strip()
+    logger.debug(f"Invite code submission attempt with value: {invite_code_value}")
 
-    if hash_value:
-        # Validate hash exists in storage
-        storage_data = load_storage()
-        invitation = find_invitation_by_hash(storage_data, hash_value)
-        if invitation:
-            logger.info(f"Hash validation successful for: {hash_value}")
-            state['hash'] = hash_value
-            state['steps_completed']['code_entered'] = True
-            session_manager.update_state_from_hash(hash_value)
-            ui.navigate.to(f'/accept/{hash_value}')
+    if invite_code_value:
+        # Validate and process invite_code
+        if process_invite_code(invite_code_value):
+            logger.info(f"Invite code validation successful for: {invite_code_value}")
+            ui.navigate.to('/accept')
         else:
-            logger.warning(f"Invalid hash submitted: {hash_value}")
+            logger.warning(f"Invalid invite_code submitted: {invite_code_value}")
             ui.notify('Ongeldige uitnodigingscode', type='negative')
     else:
-        logger.warning("Empty hash value submitted")
+        logger.warning("Empty invite_code value submitted")
+
+
+def process_invite_code(invite_code: str) -> bool:
+    """
+    Validate and apply invite code to session state if valid.
+    Returns True if successful, False otherwise.
+    """
+    if not invite_code or not invite_code.strip():
+        return False
+
+    storage_data = load_storage()
+    invitation = find_invitation_by_code(storage_data, invite_code.strip())
+    if not invitation:
+        return False
+
+    group = find_group_by_id(storage_data, invitation['group_id'])
+    if not group:
+        return False
+
+    # Update state with all relevant data
+    state = session_manager.state
+    state['invite_code'] = invite_code
+    state['group_name'] = group.get('name', 'Unknown Group')
+    state['redirect_url'] = group.get('redirect_url', 'https://canvas.uva.nl/')
+    state['redirect_text'] = group.get('redirect_text', 'Canvas (UvA)')
+    state['steps_completed']['code_entered'] = True
+
+    return True
 
 
 def handle_eduid_login():
@@ -61,16 +82,17 @@ def handle_eduid_login():
 
 
 @ui.page('/accept')
-@ui.page('/accept/{hash_param}')
-def accept_invitation(hash_param: str = ""):
+@ui.page('/accept/{invite_code}')
+def accept_invitation(invite_code: str = ""):
     """Handle the accept invitation route"""
-    logger.info(f"Accept invitation page accessed with hash_param: {hash_param}")
+    logger.info(f"Accept invitation page accessed with invite_code_param: {invite_code}")
 
     # Initialize user state
     session_manager.initialize_user_state()
 
-    # Update state from hash parameter
-    session_manager.update_state_from_hash(hash_param)
+    # Update state from invite_code parameter using consolidated logic
+    if invite_code:
+        process_invite_code(invite_code)
 
     # Bind to state for reactivity using session manager
     state = session_manager.state
@@ -87,11 +109,11 @@ def accept_invitation(hash_param: str = ""):
 
         # Step 1: Code input
         def step1_content():
-            if not state['hash']:
+            if not state['invite_code']:
                 with ui.column().classes('mt-2'):
                     ui.input('Voer hier uw uitnodigingscode in',
-                             placeholder='Uitnodigingscode').bind_value(state, 'hash_input').classes('w-full')
-                    ui.button('Code bevestigen', on_click=handle_hash_submit).classes('mt-2')
+                             placeholder='Uitnodigingscode').bind_value(state, 'invite_code_input').classes('w-full')
+                    ui.button('Code bevestigen', on_click=handle_invite_code_submit).classes('mt-2')
             else:
                 ui.label('✓ Code ontvangen en bevestigd').classes('text-green-600 mt-2')
 
@@ -100,7 +122,7 @@ def accept_invitation(hash_param: str = ""):
 
         # Step 2: eduID login
         def step2_content():
-            if state['hash'] and state['steps_completed']['code_entered']:
+            if state['invite_code'] and state['steps_completed']['code_entered']:
                 if not state['steps_completed']['eduid_login']:
                     with ui.column().classes('mt-2'):
                         ui.button('Inloggen met eduID', on_click=handle_eduid_login).classes('mr-4')
@@ -121,7 +143,7 @@ def accept_invitation(hash_param: str = ""):
                 ui.label('✓ eduID attributen geverifieerd').classes('text-green-600 mt-2')
 
                 # Show eduID attributes if available
-                userinfo = state.get('eduid_userinfo')
+                userinfo = state['eduid_userinfo'] if 'eduid_userinfo' in state else None
                 if userinfo:
                     with ui.expansion('Bekijk eduID attributen', icon='info').classes('mt-2'):
                         with ui.column().classes('gap-1'):
@@ -151,9 +173,9 @@ def accept_invitation(hash_param: str = ""):
                          state['steps_completed']['completed'], step4_content)
 
         # Show SCIM provisioning dialog if flag is set
-        if state.get('show_scim_dialog'):
+        if 'show_scim_dialog' in state and state['show_scim_dialog']:
             scim_provisioning()
 
         # Debug: Check if we should show SCIM dialog
-        logger.debug(f"SCIM dialog flag: {state.get('show_scim_dialog')}")
+        logger.debug(f"SCIM dialog flag: {state['show_scim_dialog'] if 'show_scim_dialog' in state else None}")
         logger.debug(f"Steps completed: {state['steps_completed']}")

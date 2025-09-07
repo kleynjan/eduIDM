@@ -101,7 +101,7 @@ def login():
 # has logged in
 @app.route('/oidc_callback')
 def oidc_callback():
-    code = request.args.get('code')
+    code = request.args['code']
     access_token = get_access_token(code, code_verifier)
     if access_token is None:
         return "Error while getting access token"

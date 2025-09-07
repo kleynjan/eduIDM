@@ -22,7 +22,7 @@ def handle_error(error_msg: str, error_type: str = "error", notify_user: bool = 
     logger.error(f"{error_type}: {error_msg}")
 
     if notify_user:
-        ui.notify(error_msg, type=notification_type)
+        ui.notify(error_msg, type=notification_type)  # type: ignore
 
 
 def handle_oidc_error(error_msg: str, session_state: dict, notify_user: bool = True) -> None:
@@ -52,5 +52,5 @@ def clear_oidc_error(session_state: dict) -> None:
 def get_oidc_error(session_state: dict) -> Optional[str]:
     """Get current OIDC error if any"""
     if 'oidc' in session_state:
-        return session_state['oidc'].get('error')
+        return session_state['oidc']['error'] if 'error' in session_state['oidc'] else None
     return None

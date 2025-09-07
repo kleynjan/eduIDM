@@ -2,7 +2,7 @@
 # when eduID login is completed, calls complete_eduid_login with updated session_state
 
 from nicegui import ui
-from session_manager import session_manager
+from services.session_manager import session_manager
 from .app_interface import complete_eduid_login, process_eduid_completion
 from utils.logging import logger
 

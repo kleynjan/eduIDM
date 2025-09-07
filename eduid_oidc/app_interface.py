@@ -4,7 +4,7 @@ import json
 from datetime import datetime
 from typing import Dict, Any, Optional
 from .oidc_protocol import generate_pkce, build_auth_url, exchange_code, get_userinfo, load_well_known_config
-from services.storage import load_storage, save_storage, find_invitation_by_hash
+from services.storage import load_storage, save_storage, find_invitation_by_code
 from utils.logging import logger
 
 def load_eduid_config() -> Dict[str, Any]:
@@ -119,11 +119,11 @@ def process_eduid_completion(userinfo: Dict[str, Any], user_state: Dict[str, Any
     user_state['steps_completed']['attributes_verified'] = True
 
     # Update storage with completion
-    current_hash = user_state['hash']
-    if current_hash:
-        logger.debug(f"Updating storage for hash: {current_hash}")
+    current_invite_code = user_state['invite_code']
+    if current_invite_code:
+        logger.debug(f"Updating storage for invite_code: {current_invite_code}")
         storage_data = load_storage()
-        invitation = find_invitation_by_hash(storage_data, current_hash)
+        invitation = find_invitation_by_code(storage_data, current_invite_code)
         if invitation and not invitation.get('datetime_accepted'):
             invitation['datetime_accepted'] = datetime.utcnow().isoformat() + 'Z'
             logger.info(f"Set acceptance timestamp for guest_id: {invitation['guest_id']}")
@@ -142,9 +142,9 @@ def process_eduid_completion(userinfo: Dict[str, Any], user_state: Dict[str, Any
             user_state['show_scim_dialog'] = True
             logger.info("eduID flow completed successfully, all steps marked as done")
         else:
-            logger.warning(f"Invitation already accepted or not found for hash: {current_hash}")
+            logger.warning(f"Invitation already accepted or not found for invite_code: {current_invite_code}")
     else:
-        logger.warning("No current hash found in user state during eduID completion")
+        logger.warning("No current invite_code found in user state during eduID completion")
 
 
 # Note: These functions are no longer needed since we don't maintain OIDC state

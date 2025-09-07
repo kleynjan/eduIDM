@@ -6,7 +6,6 @@ Provides a singleton session manager that works with NiceGUI reactive binding.
 import uuid
 from typing import Dict, Any
 from nicegui import app
-from services.storage import load_storage, find_invitation_by_hash, find_group_by_id
 from utils.logging import logger
 
 
@@ -25,7 +24,7 @@ class SessionManager:
     @property
     def server_session_key(self) -> str:
         """Get the current server session key"""
-        return self._server_session_key
+        return self._server_session_key  # type: ignore
 
     @property
     def session_state(self) -> Dict[str, Any]:
@@ -43,7 +42,7 @@ class SessionManager:
             logger.debug(f"Initializing new user state for server session: {self._server_session_key}")
             app.storage.user[self._server_session_key] = {
                 'state': {
-                    'hash': '',
+                    'invite_code': '',
                     'group_name': 'Unknown Group',
                     'steps_completed': {
                         'code_entered': False,
@@ -51,7 +50,7 @@ class SessionManager:
                         'attributes_verified': False,
                         'completed': False
                     },
-                    'hash_input': ''
+                    'invite_code_input': ''
                 }
             }
             logger.info(f"User state initialized successfully for server session: {self._server_session_key}")
@@ -70,33 +69,6 @@ class SessionManager:
         for old_session in sessions_to_remove:
             del app.storage.user[old_session]
             logger.debug(f"Cleaned up old session: {old_session}")
-
-    def update_state_from_hash(self, hash_param: str = None) -> None:
-        """Update state based on hash parameter"""
-        logger.debug(f"Updating state from hash parameter: {hash_param}")
-        storage_data = load_storage()
-        state = self.state
-        current_hash = hash_param or state.get('hash', '')
-
-        if current_hash:
-            logger.debug(f"Processing hash: {current_hash}")
-            invitation = find_invitation_by_hash(storage_data, current_hash)
-            if invitation:
-                logger.info(f"Found invitation for hash {current_hash}: guest_id={invitation.get('guest_id')}")
-                group = find_group_by_id(storage_data, invitation.get('group_id'))
-                if group:
-                    group_name = group.get('name', 'Unknown Group')
-                    state['group_name'] = group_name
-                    state['redirect_url'] = group.get('redirect_url', 'https://canvas.uva.nl/')
-                    state['redirect_text'] = group.get('redirect_text', 'Canvas (UvA)')
-                    logger.info(f"Updated group info: {group_name}, redirect: {state['redirect_text']}")
-                state['hash'] = current_hash
-                state['steps_completed']['code_entered'] = True
-                logger.info(f"Hash validation successful, code_entered step marked as completed")
-            else:
-                logger.warning(f"No guest group found for hash: {current_hash}")
-        else:
-            logger.debug("No hash provided, skipping state update")
 
 
 # Create singleton instance

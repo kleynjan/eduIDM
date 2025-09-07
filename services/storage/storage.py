@@ -21,24 +21,24 @@ def save_storage(data: Dict[str, Any]) -> None:
     with open(_STORAGE_FILE, 'w', encoding='utf-8') as f:
         json.dump(data, f, indent=4, ensure_ascii=False)
 
-def find_invitation_by_hash(storage_data: Dict[str, Any], hash_id: str) -> Optional[Dict[str, Any]]:
-    """Find invitation entry by hash (invitation_id)"""
+def find_invitation_by_code(storage_data: Dict[str, Any], invite_code: str) -> Optional[Dict[str, Any]]:
+    """Find invitation entry by invite_code (invitation_id)"""
     for invitation in storage_data.get('invitations', []):
-        if invitation.get('invitation_id') == hash_id:
+        if invitation['invitation_id'] == invite_code:
             return invitation
     return None
 
 def find_group_by_id(storage_data: Dict[str, Any], group_id: str) -> Optional[Dict[str, Any]]:
     """Find group by group_id"""
     for group in storage_data.get('groups', []):
-        if group.get('id') == group_id:
+        if group['id'] == group_id:
             return group
     return None
 
 def find_group_by_name(storage_data: Dict[str, Any], group_name: str) -> Optional[Dict[str, Any]]:
     """Find group by group name"""
     for group in storage_data.get('groups', []):
-        if group.get('name') == group_name:
+        if group['name'] == group_name:
             return group
     return None
 
@@ -84,23 +84,23 @@ def get_all_invitations_with_details() -> List[Dict[str, Any]]:
 
     for invitation in storage_data.get('invitations', []):
         # Get group details
-        group = find_group_by_id(storage_data, invitation.get('group_id'))
+        group = find_group_by_id(storage_data, invitation['group_id'])
         group_name = group.get('name', 'Unknown Group') if group else 'Unknown Group'
 
         # Format dates
-        datetime_invited_formatted = format_datetime(invitation.get('datetime_invited'))
-        datetime_accepted_formatted = format_datetime(invitation.get('datetime_accepted'))
+        datetime_invited_formatted = format_datetime(invitation['datetime_invited'])
+        datetime_accepted_formatted = format_datetime(invitation['datetime_accepted'])
 
         invitation_detail = {
-            'invitation_id': invitation.get('invitation_id'),
-            'guest_id': invitation.get('guest_id'),
+            'invitation_id': invitation['invitation_id'],
+            'guest_id': invitation['guest_id'],
             'group_name': group_name,
-            'group_id': invitation.get('group_id'),
+            'group_id': invitation['group_id'],
             'invitation_mail_address': invitation.get('invitation_mail_address', ''),
             'datetime_invited_formatted': datetime_invited_formatted,
             'datetime_accepted_formatted': datetime_accepted_formatted,
-            'datetime_invited': invitation.get('datetime_invited'),
-            'datetime_accepted': invitation.get('datetime_accepted')
+            'datetime_invited': invitation['datetime_invited'],
+            'datetime_accepted': invitation['datetime_accepted']
         }
         invitations_with_details.append(invitation_detail)
 
@@ -113,5 +113,15 @@ def get_all_groups() -> List[Dict[str, Any]]:
 
 # Legacy function for backward compatibility - can be removed later
 def find_guest_group_by_hash(storage_data: Dict[str, Any], hash_id: str) -> Optional[Dict[str, Any]]:
-    """Legacy function - use find_invitation_by_hash instead"""
-    return find_invitation_by_hash(storage_data, hash_id)
+    """Legacy function - use find_invitation_by_code instead"""
+    return find_invitation_by_code(storage_data, hash_id)
+
+# Backward compatibility alias
+def find_invitation_by_hash(storage_data: Dict[str, Any], hash_id: str) -> Optional[Dict[str, Any]]:
+    """Backward compatibility alias - use find_invitation_by_code instead"""
+    return find_invitation_by_code(storage_data, hash_id)
+
+# Backward compatibility alias
+def find_invitation_by_invite_code(storage_data: Dict[str, Any], invite_code: str) -> Optional[Dict[str, Any]]:
+    """Backward compatibility alias - use find_invitation_by_code instead"""
+    return find_invitation_by_code(storage_data, invite_code)
