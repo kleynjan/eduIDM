@@ -36,13 +36,13 @@ SURF Invite lijkt zich te ontwikkelen tot een RBAC-tool, met als uitgangspunt da
 
 Ik denk dat het cruciaal is om die relatie tussen interne identiteiten en eduID's wél te kunnen leggen. Bovendien is er behoefte aan een tool die vanuit lifecycle-perspectief de externe *gebruiker* een goede ervaring geeft -- en de *instelling* zekerheid over identiteit en credentials. 
 
+<img src="screenshot.png" alt="screenshot" width="400" style="float:right;"/>
+
 ### Installatie
 
 * Maak in je SP Dashboard een OIDC RP client endpoint aan en kopieer deze gegevens naar config.json
 * Maak een python environment o.b.v. de requirements.txt. Clone het project.
 * `python main.py` om de server te starten op `http://localhost:8080/`
-
-![eduIDM screenshot](screenshot.png)
 
 ### TODO
 * POST terug naar de backend (al dan niet met SCIM). 
