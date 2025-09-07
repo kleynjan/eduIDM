@@ -21,50 +21,47 @@ def create_step_card(step_num: int, title: str, is_completed: bool, content_func
                 content_func()
 
 
-def handle_invite_code_submit():
-    state = session_manager.state
-    invite_code_value = state['invite_code_input'].strip()
-    logger.debug(f"Invite code submission attempt with value: {invite_code_value}")
+# def handle_invite_code_submit():
+#     state = session_manager.state
+#     invite_code_value = state['invite_code_input'].strip()
+#     logger.debug(f"Invite code submission attempt with value: {invite_code_value}")
 
-    if invite_code_value:
-        # Validate and process invite_code
-        if process_invite_code(invite_code_value):
-            logger.info(f"Invite code validation successful for: {invite_code_value}")
-            ui.navigate.to('/accept')
-        else:
-            logger.warning(f"Invalid invite_code submitted: {invite_code_value}")
-            ui.notify('Ongeldige uitnodigingscode', type='negative')
-    else:
-        logger.warning("Empty invite_code value submitted")
+#     if invite_code_value:
+#         # Validate and process invite_code
+#         if process_invite_code(invite_code_value):
+#             logger.info(f"Invite code validation successful for: {invite_code_value}")
+#             ui.navigate.to('/accept')
+#         else:
+#             logger.warning(f"Invalid invite_code submitted: {invite_code_value}")
+#             ui.notify('Ongeldige uitnodigingscode', type='negative')
+#     else:
+#         logger.warning("Empty invite_code value submitted")
 
 
-def process_invite_code(invite_code: str) -> bool:
+def process_invite_code(invite_code: str):
     """
     Validate and apply invite code to session state if valid.
-    Returns True if successful, False otherwise.
     """
-    if not invite_code or not invite_code.strip():
-        return False
-
     storage_data = load_storage()
     invitation = find_invitation_by_code(storage_data, invite_code.strip())
-    if not invitation:
-        return False
+    if invitation:
+        group = find_group_by_id(storage_data, invitation['group_id'])
+        if group:
+            # Update state with all relevant data
+            state = session_manager.state
+            state['invite_code'] = invite_code
+            state['group_name'] = group['name']
+            state['redirect_url'] = group.get('redirect_url', '')
+            state['redirect_text'] = group.get('redirect_text', '')
+            state['steps_completed']['code_entered'] = True
 
-    group = find_group_by_id(storage_data, invitation['group_id'])
-    if not group:
-        return False
-
-    # Update state with all relevant data
-    state = session_manager.state
-    state['invite_code'] = invite_code
-    state['group_name'] = group.get('name', 'Unknown Group')
-    state['redirect_url'] = group.get('redirect_url', 'https://canvas.uva.nl/')
-    state['redirect_text'] = group.get('redirect_text', 'Canvas (UvA)')
-    state['steps_completed']['code_entered'] = True
-
-    return True
-
+            ui.navigate.to('/accept')
+        else:
+            logger.error(f"Group not found for group_id: {invitation['group_id']}")
+            ui.notify('Ongeldige uitnodigingscode (groep niet gevonden)', type='negative')
+    else:
+        logger.warning(f"Invalid invite_code attempted: {invite_code}")
+        ui.notify('Ongeldige uitnodigingscode', type='negative')
 
 def handle_eduid_login():
     """Handle eduID login via OIDC"""
@@ -84,7 +81,18 @@ def handle_eduid_login():
 @ui.page('/accept')
 @ui.page('/accept/{invite_code}')
 def accept_invitation(invite_code: str = ""):
-    """Handle the accept invitation route"""
+
+    # def handle_invite_code_submit():
+    #     invite_code_value = state['invite_code_input'].strip()
+    #         if process_invite_code(invite_code_value):
+    #             logger.info(f"Invite code validation successful for: {invite_code_value}")
+    #             ui.navigate.to('/accept')
+    #         else:
+    #             logger.warning(f"Invalid invite_code submitted: {invite_code_value}")
+    #             ui.notify('Ongeldige uitnodigingscode', type='negative')
+    #     else:
+    #         logger.warning("Empty invite_code value submitted")
+
     logger.info(f"Accept invitation page accessed with invite_code_param: {invite_code}")
 
     # Initialize user state
@@ -111,9 +119,10 @@ def accept_invitation(invite_code: str = ""):
         def step1_content():
             if not state['invite_code']:
                 with ui.column().classes('mt-2'):
-                    ui.input('Voer hier uw uitnodigingscode in',
-                             placeholder='Uitnodigingscode').bind_value(state, 'invite_code_input').classes('w-full')
-                    ui.button('Code bevestigen', on_click=handle_invite_code_submit).classes('mt-2')
+                    invite_code_input = ui.input('Voer hier uw uitnodigingscode in',
+                                                 placeholder='Uitnodigingscode').classes('w-full')
+                    ui.button('Code bevestigen', on_click=lambda x: process_invite_code(
+                        invite_code_input.value)).classes('mt-2')
             else:
                 ui.label('✓ Code ontvangen en bevestigd').classes('text-green-600 mt-2')
 
@@ -161,7 +170,6 @@ def accept_invitation(invite_code: str = ""):
             if state['steps_completed']['attributes_verified']:
                 with ui.column().classes('mt-2'):
                     ui.label('✓ Uw eduID is nu gekoppeld!').classes('text-green-600 mb-2')
-                    # Use direct values instead of binding for the link
                     redirect_url = state.get('redirect_url', 'https://canvas.uva.nl/')
                     redirect_text = state.get('redirect_text', 'Canvas (UvA)')
                     ui.link(f'Klik hier om in te loggen op {redirect_text}', redirect_url, new_tab=True).classes(
