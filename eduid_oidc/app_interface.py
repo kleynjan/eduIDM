@@ -4,7 +4,7 @@ import json
 from datetime import datetime
 from typing import Dict, Any, Optional
 from .oidc_protocol import generate_pkce, build_auth_url, exchange_code, get_userinfo, load_well_known_config
-from services.storage import load_storage, save_storage, find_invitation_by_code
+from services.storage import find_invitation_by_code, update_invitation
 from utils.logging import logger
 
 def load_eduid_config() -> Dict[str, Any]:
@@ -122,25 +122,30 @@ def process_eduid_completion(userinfo: Dict[str, Any], user_state: Dict[str, Any
     current_invite_code = user_state['invite_code']
     if current_invite_code:
         logger.debug(f"Updating storage for invite_code: {current_invite_code}")
-        storage_data = load_storage()
-        invitation = find_invitation_by_code(storage_data, current_invite_code)
+        invitation = find_invitation_by_code(current_invite_code)
         if invitation and not invitation.get('datetime_accepted'):
-            invitation['datetime_accepted'] = datetime.utcnow().isoformat() + 'Z'
-            logger.info(f"Set acceptance timestamp for guest_id: {invitation['guest_id']}")
-
-            # Store eduID attributes directly in invitation record
             # Extract eduperson_principal_name and store as eppn
             userinfo_copy = userinfo.copy()
             eppn = userinfo_copy.pop('eduperson_principal_name', '')
-            invitation['eppn'] = eppn
-            invitation['eduid_props'] = userinfo_copy
-            logger.info(f"Stored eduID properties for guest_id: {invitation['guest_id']}, eppn: {eppn}")
 
-            save_storage(storage_data)
-            user_state['steps_completed']['completed'] = True
-            # Set flag to show SCIM dialog on accept page
-            user_state['show_scim_dialog'] = True
-            logger.info("eduID flow completed successfully, all steps marked as done")
+            # Update invitation with eduID data
+            success = update_invitation(
+                current_invite_code,
+                datetime_accepted=datetime.utcnow().isoformat() + 'Z',
+                eppn=eppn,
+                eduid_props=userinfo_copy
+            )
+
+            if success:
+                logger.info(f"Set acceptance timestamp for guest_id: {invitation['guest_id']}")
+                logger.info(f"Stored eduID properties for guest_id: {invitation['guest_id']}, eppn: {eppn}")
+
+                user_state['steps_completed']['completed'] = True
+                # Set flag to show SCIM dialog on accept page
+                user_state['show_scim_dialog'] = True
+                logger.info("eduID flow completed successfully, all steps marked as done")
+            else:
+                logger.error(f"Failed to update invitation for invite_code: {current_invite_code}")
         else:
             logger.warning(f"Invitation already accepted or not found for invite_code: {current_invite_code}")
     else:

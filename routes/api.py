@@ -8,7 +8,7 @@ from nicegui import app
 from fastapi import Request, HTTPException
 from services.storage import (
     create_invitation, get_all_invitations_with_details, get_all_groups,
-    load_storage, find_group_by_name
+    find_group_by_name
 )
 from utils.logging import logger
 
@@ -51,8 +51,7 @@ async def create_invitation_api(request: Request):
             )
 
         # Look up group by name to get group_id
-        storage_data = load_storage()
-        group = find_group_by_name(storage_data, data['group_name'].strip())
+        group = find_group_by_name(data['group_name'].strip())
 
         if not group:
             logger.warning(f"API POST /api/invitations - group not found: {data['group_name']}")

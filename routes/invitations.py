@@ -90,10 +90,10 @@ def manual_invite_dialog(page_state):
             )
 
             # Find group name for confirmation
-            selected_group = next(
-                (group for group in page_state['groups'] if group['id'] == dialog_state['selected_group_id']),
-                {'name': 'Unknown Group'}
-            )
+            groups = [group for group in page_state['groups'] if group['id'] == dialog_state['selected_group_id']]
+            if not groups:
+                raise Exception("Selected group not found")
+            selected_group = groups[0]
 
             logger.info(f"Invitation created successfully: {invitation_id}")
 
@@ -171,4 +171,5 @@ def show_confirmation_dialog(group_name, email_address, invitation_id, page_stat
         ui.label(f'Uitnodiging voor group {group_name} wordt verstuurd naar {email_address}.').classes('mb-2')
         ui.label(f'Uitnodigingscode: {invitation_id}').classes('mb-4 font-mono text-sm')
 
+        ui.button('OK', on_click=handle_ok).classes('bg-blue-500 text-white w-full')
         ui.button('OK', on_click=handle_ok).classes('bg-blue-500 text-white w-full')

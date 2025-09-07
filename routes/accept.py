@@ -1,11 +1,11 @@
 # /accept route: self-service page showing onboarding progress
 
-from nicegui import ui
+from nicegui import app, ui
 
 from eduid_oidc.app_interface import start_eduid_login
 from services.scim_service import scim_provisioning
 from services.session_manager import session_manager
-from services.storage import find_invitation_by_code, find_group_by_id, load_storage
+from services.storage import find_invitation_by_code, find_group_by_id
 from utils.logging import logger
 
 def create_step_card(step_num: int, title: str, is_completed: bool, content_func):
@@ -20,32 +20,13 @@ def create_step_card(step_num: int, title: str, is_completed: bool, content_func
                 ui.label(title).classes('text-lg font-semibold')
                 content_func()
 
-
-# def handle_invite_code_submit():
-#     state = session_manager.state
-#     invite_code_value = state['invite_code_input'].strip()
-#     logger.debug(f"Invite code submission attempt with value: {invite_code_value}")
-
-#     if invite_code_value:
-#         # Validate and process invite_code
-#         if process_invite_code(invite_code_value):
-#             logger.info(f"Invite code validation successful for: {invite_code_value}")
-#             ui.navigate.to('/accept')
-#         else:
-#             logger.warning(f"Invalid invite_code submitted: {invite_code_value}")
-#             ui.notify('Ongeldige uitnodigingscode', type='negative')
-#     else:
-#         logger.warning("Empty invite_code value submitted")
-
-
 def process_invite_code(invite_code: str):
     """
     Validate and apply invite code to session state if valid.
     """
-    storage_data = load_storage()
-    invitation = find_invitation_by_code(storage_data, invite_code.strip())
+    invitation = find_invitation_by_code(invite_code.strip())
     if invitation:
-        group = find_group_by_id(storage_data, invitation['group_id'])
+        group = find_group_by_id(invitation['group_id'])
         if group:
             # Update state with all relevant data
             state = session_manager.state
@@ -65,7 +46,6 @@ def process_invite_code(invite_code: str):
 
 def handle_eduid_login():
     """Handle eduID login via OIDC"""
-    from nicegui import app
 
     logger.info("Starting eduID login process via OIDC")
 
@@ -81,38 +61,24 @@ def handle_eduid_login():
 @ui.page('/accept')
 @ui.page('/accept/{invite_code}')
 def accept_invitation(invite_code: str = ""):
-
-    # def handle_invite_code_submit():
-    #     invite_code_value = state['invite_code_input'].strip()
-    #         if process_invite_code(invite_code_value):
-    #             logger.info(f"Invite code validation successful for: {invite_code_value}")
-    #             ui.navigate.to('/accept')
-    #         else:
-    #             logger.warning(f"Invalid invite_code submitted: {invite_code_value}")
-    #             ui.notify('Ongeldige uitnodigingscode', type='negative')
-    #     else:
-    #         logger.warning("Empty invite_code value submitted")
-
-    logger.info(f"Accept invitation page accessed with invite_code_param: {invite_code}")
-
-    # Initialize user state
     session_manager.initialize_user_state()
+    state = session_manager.state
+    logger.debug(f"Accept page, current user state: {state}")
 
     # Update state from invite_code parameter using consolidated logic
     if invite_code:
         process_invite_code(invite_code)
 
-    # Bind to state for reactivity using session manager
-    state = session_manager.state
-    logger.debug(f"Current user state: {state}")
-
-    # Page setup
-    ui.page_title(f'Uitnodiging - {state["group_name"]}')
+    suffix = f"{state['group_name']}" if state['group_name'] else ""
+    title = f"Uitnodiging - {suffix}" if suffix else "Uitnodiging"
+    welkom = f"Welkom bij {suffix}" if suffix else "Welkom"
+    ui.page_title(title)
 
     with ui.column().classes('max-w-4xl mx-auto p-6'):
         # Header
-        ui.label().bind_text_from(state, 'group_name',
-                                  lambda name: f'Welkom bij {name}').classes('text-3xl font-bold mb-2')
+        # ui.label().bind_text_from(state, 'group_name',
+        #                           lambda name: f'Welkom ').classes('text-3xl font-bold mb-2')
+        ui.label(welkom).classes('text-3xl font-bold mb-2')
         ui.label('Volg het stappenplan hieronder om uw uitnodiging te accepteren.').classes('text-lg mb-6')
 
         # Step 1: Code input
@@ -146,7 +112,7 @@ def accept_invitation(invite_code: str = ""):
         create_step_card(2, '2. Klik hier om in te loggen met eduID.',
                          state['steps_completed']['eduid_login'], step2_content)
 
-        # Step 3: Attribute verification
+        # Step 3: Checking ACR
         def step3_content():
             if state['steps_completed']['eduid_login']:
                 ui.label('✓ eduID attributen geverifieerd').classes('text-green-600 mt-2')

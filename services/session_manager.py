@@ -43,7 +43,7 @@ class SessionManager:
             app.storage.user[self._server_session_key] = {
                 'state': {
                     'invite_code': '',
-                    'group_name': 'Unknown Group',
+                    'group_name': '',
                     'steps_completed': {
                         'code_entered': False,
                         'eduid_login': False,

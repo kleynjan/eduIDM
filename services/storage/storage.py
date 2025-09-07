@@ -21,22 +21,25 @@ def save_storage(data: Dict[str, Any]) -> None:
     with open(_STORAGE_FILE, 'w', encoding='utf-8') as f:
         json.dump(data, f, indent=4, ensure_ascii=False)
 
-def find_invitation_by_code(storage_data: Dict[str, Any], invite_code: str) -> Optional[Dict[str, Any]]:
+def find_invitation_by_code(invite_code: str) -> Optional[Dict[str, Any]]:
     """Find invitation entry by invite_code (invitation_id)"""
+    storage_data = load_storage()
     for invitation in storage_data.get('invitations', []):
         if invitation['invitation_id'] == invite_code:
             return invitation
     return None
 
-def find_group_by_id(storage_data: Dict[str, Any], group_id: str) -> Optional[Dict[str, Any]]:
+def find_group_by_id(group_id: str) -> Optional[Dict[str, Any]]:
     """Find group by group_id"""
+    storage_data = load_storage()
     for group in storage_data.get('groups', []):
         if group['id'] == group_id:
             return group
     return None
 
-def find_group_by_name(storage_data: Dict[str, Any], group_name: str) -> Optional[Dict[str, Any]]:
+def find_group_by_name(group_name: str) -> Optional[Dict[str, Any]]:
     """Find group by group name"""
+    storage_data = load_storage()
     for group in storage_data.get('groups', []):
         if group['name'] == group_name:
             return group
@@ -84,8 +87,8 @@ def get_all_invitations_with_details() -> List[Dict[str, Any]]:
 
     for invitation in storage_data.get('invitations', []):
         # Get group details
-        group = find_group_by_id(storage_data, invitation['group_id'])
-        group_name = group.get('name', 'Unknown Group') if group else 'Unknown Group'
+        group = find_group_by_id(invitation['group_id'])
+        group_name = group.get('name', '')  # type: ignore
 
         # Format dates
         datetime_invited_formatted = format_datetime(invitation['datetime_invited'])
@@ -111,17 +114,37 @@ def get_all_groups() -> List[Dict[str, Any]]:
     storage_data = load_storage()
     return storage_data.get('groups', [])
 
+def update_invitation(invite_code: str, **updates) -> bool:
+    """Update an invitation with the provided fields
+
+    Args:
+        invite_code: The invitation code to update
+        **updates: Keyword arguments for fields to update
+
+    Returns:
+        True if invitation was found and updated, False otherwise
+    """
+    storage_data = load_storage()
+
+    for invitation in storage_data.get('invitations', []):
+        if invitation['invitation_id'] == invite_code:
+            invitation.update(updates)
+            save_storage(storage_data)
+            return True
+
+    return False
+
 # Legacy function for backward compatibility - can be removed later
-def find_guest_group_by_hash(storage_data: Dict[str, Any], hash_id: str) -> Optional[Dict[str, Any]]:
+def find_guest_group_by_hash(hash_id: str) -> Optional[Dict[str, Any]]:
     """Legacy function - use find_invitation_by_code instead"""
-    return find_invitation_by_code(storage_data, hash_id)
+    return find_invitation_by_code(hash_id)
 
 # Backward compatibility alias
-def find_invitation_by_hash(storage_data: Dict[str, Any], hash_id: str) -> Optional[Dict[str, Any]]:
+def find_invitation_by_hash(hash_id: str) -> Optional[Dict[str, Any]]:
     """Backward compatibility alias - use find_invitation_by_code instead"""
-    return find_invitation_by_code(storage_data, hash_id)
+    return find_invitation_by_code(hash_id)
 
 # Backward compatibility alias
-def find_invitation_by_invite_code(storage_data: Dict[str, Any], invite_code: str) -> Optional[Dict[str, Any]]:
+def find_invitation_by_invite_code(invite_code: str) -> Optional[Dict[str, Any]]:
     """Backward compatibility alias - use find_invitation_by_code instead"""
-    return find_invitation_by_code(storage_data, invite_code)
+    return find_invitation_by_code(invite_code)
