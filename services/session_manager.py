@@ -47,7 +47,7 @@ class SessionManager:
                     'steps_completed': {
                         'code_entered': False,
                         'eduid_login': False,
-                        'attributes_verified': False,
+                        'mfa_verified': False,
                         'completed': False
                     },
                     'invite_code_input': ''

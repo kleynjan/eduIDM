@@ -112,13 +112,35 @@ def accept_invitation(invite_code: str = ""):
         create_step_card(2, '2. Klik hier om in te loggen met eduID.',
                          state['steps_completed']['eduid_login'], step2_content)
 
-        # Step 3: Checking ACR
+        # Step 3: MFA Verification
         def step3_content():
             if state['steps_completed']['eduid_login']:
-                ui.label('✓ eduID attributen geverifieerd').classes('text-green-600 mt-2')
+                userinfo = state.get('eduid_userinfo', {})
+                acr = userinfo.get('acr', '')
+
+                if state['steps_completed']['mfa_verified']:
+                    ui.label('✓ MFA is geconfigureerd').classes('text-green-600 mt-2')
+                else:
+                    # Check if ACR contains "Password" - meaning MFA is required
+                    if 'Password' in acr:
+                        with ui.column().classes('mt-2'):
+                            ui.label('Een tweede factor is hier vereist. Installeer de eduID app.').classes(
+                                'text-orange-600 mb-2')
+
+                            def configure_mfa_dummy():
+                                state['steps_completed']['mfa_verified'] = True
+                                state['steps_completed']['completed'] = True
+                                state['show_scim_dialog'] = True
+                                ui.notify('Yep, uw tweede factor is nu zogenaamd actief!', type='positive')
+                                ui.navigate.to('/accept')  # Refresh the page to show updated state
+
+                            ui.button('Hmm, laten we net doen alsof',
+                                      on_click=configure_mfa_dummy).classes('bg-orange-500 text-white')
+                    else:
+                        # No Password in ACR or no ACR info - MFA already configured
+                        ui.label('✓ MFA is al geconfigureerd').classes('text-green-600 mt-2')
 
                 # Show eduID attributes if available
-                userinfo = state['eduid_userinfo'] if 'eduid_userinfo' in state else None
                 if userinfo:
                     with ui.expansion('Bekijk eduID attributen', icon='info').classes('mt-2'):
                         with ui.column().classes('gap-1'):
@@ -128,12 +150,12 @@ def accept_invitation(invite_code: str = ""):
             else:
                 ui.label('Voltooi eerst stap 2').classes('text-gray-500 mt-2')
 
-        create_step_card(3, '3. Verificatie van eduID attributen.',
-                         state['steps_completed']['attributes_verified'], step3_content)
+        create_step_card(3, '3. MFA verificatie.',
+                         state['steps_completed']['mfa_verified'], step3_content)
 
         # Step 4: Completion
         def step4_content():
-            if state['steps_completed']['attributes_verified']:
+            if state['steps_completed']['mfa_verified']:
                 with ui.column().classes('mt-2'):
                     ui.label('✓ Uw eduID is nu gekoppeld!').classes('text-green-600 mb-2')
                     redirect_url = state.get('redirect_url', 'https://canvas.uva.nl/')
@@ -149,7 +171,3 @@ def accept_invitation(invite_code: str = ""):
         # Show SCIM provisioning dialog if flag is set
         if 'show_scim_dialog' in state and state['show_scim_dialog']:
             scim_provisioning()
-
-        # Debug: Check if we should show SCIM dialog
-        logger.debug(f"SCIM dialog flag: {state['show_scim_dialog'] if 'show_scim_dialog' in state else None}")
-        logger.debug(f"Steps completed: {state['steps_completed']}")

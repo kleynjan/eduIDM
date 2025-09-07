@@ -114,6 +114,70 @@ def get_all_groups() -> List[Dict[str, Any]]:
     storage_data = load_storage()
     return storage_data.get('groups', [])
 
+def create_group(name: str, redirect_url: str, redirect_text: str) -> str:
+    """Create a new group and return the group_id"""
+    storage_data = load_storage()
+
+    # Generate new group ID
+    group_id = str(uuid.uuid4())
+
+    # Create group record
+    group = {
+        "id": group_id,
+        "name": name,
+        "redirect_url": redirect_url,
+        "redirect_text": redirect_text
+    }
+
+    # Add to storage
+    storage_data.setdefault('groups', []).append(group)
+
+    save_storage(storage_data)
+    return group_id
+
+def update_group(group_id: str, **updates) -> bool:
+    """Update a group with the provided fields
+
+    Args:
+        group_id: The group ID to update
+        **updates: Keyword arguments for fields to update
+
+    Returns:
+        True if group was found and updated, False otherwise
+    """
+    storage_data = load_storage()
+
+    for group in storage_data.get('groups', []):
+        if group['id'] == group_id:
+            group.update(updates)
+            save_storage(storage_data)
+            return True
+
+    return False
+
+def delete_group(group_id: str) -> bool:
+    """Delete a group by ID
+
+    Args:
+        group_id: The group ID to delete
+
+    Returns:
+        True if group was found and deleted, False otherwise
+    """
+    storage_data = load_storage()
+
+    groups = storage_data.get('groups', [])
+    original_length = len(groups)
+
+    # Remove the group
+    storage_data['groups'] = [g for g in groups if g['id'] != group_id]
+
+    if len(storage_data['groups']) < original_length:
+        save_storage(storage_data)
+        return True
+
+    return False
+
 def update_invitation(invite_code: str, **updates) -> bool:
     """Update an invitation with the provided fields
 

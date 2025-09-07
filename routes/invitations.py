@@ -17,7 +17,7 @@ def invitations_page():
     # Create reactive state for the page
     page_state = {'invitations': [{}], 'groups': get_all_groups()}
 
-    with ui.column().classes('max-w-6xl mx-auto p-6'):
+    with ui.column().classes('mx-auto p-6').style('width:900px;'):
 
         # Invitations table
         @ui.refreshable

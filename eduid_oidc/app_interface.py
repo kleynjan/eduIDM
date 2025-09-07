@@ -115,9 +115,6 @@ def process_eduid_completion(userinfo: Dict[str, Any], user_state: Dict[str, Any
     user_state['steps_completed']['eduid_login'] = True
     user_state['eduid_userinfo'] = userinfo
 
-    # to do: check other attributes, eg affiliation, MFA -- for now mark as complete
-    user_state['steps_completed']['attributes_verified'] = True
-
     # Update storage with completion
     current_invite_code = user_state['invite_code']
     if current_invite_code:
@@ -139,11 +136,7 @@ def process_eduid_completion(userinfo: Dict[str, Any], user_state: Dict[str, Any
             if success:
                 logger.info(f"Set acceptance timestamp for guest_id: {invitation['guest_id']}")
                 logger.info(f"Stored eduID properties for guest_id: {invitation['guest_id']}, eppn: {eppn}")
-
-                user_state['steps_completed']['completed'] = True
-                # Set flag to show SCIM dialog on accept page
-                user_state['show_scim_dialog'] = True
-                logger.info("eduID flow completed successfully, all steps marked as done")
+                logger.info("eduID login completed successfully")
             else:
                 logger.error(f"Failed to update invitation for invite_code: {current_invite_code}")
         else:
