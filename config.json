@@ -1,6 +1,0 @@
-{
-    "CLIENT_ID": "eduidm.nl",
-    "CLIENT_SECRET": "LapeHf3dEd5v5EPmHMci",
-    "DOTWELLKNOWN": "https://connect.test.surfconext.nl/.well-known/openid-configuration",
-    "REDIRECT_URI": "http://localhost:8080/oidc_callback"
-}
