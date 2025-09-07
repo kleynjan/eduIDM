@@ -37,21 +37,11 @@ def oidc_callback(code: str = "", error: str = ""):
         ui.label('Processing Authentication...').classes('text-xl mb-4')
         ui.spinner(size='lg')
 
-        # Get session state
-        session_state = session_manager.session_state
-
         try:
-            # Get the code_verifier from session
-            code_verifier = session_state.get('oidc_code_verifier')
-            if not code_verifier:
-                raise Exception("No code_verifier found - login session may have expired")
-
-            # Complete eduID login
+            # Complete eduID login using app.storage.user
+            from nicegui import app
             logger.debug("Completing eduID login flow")
-            token_data, userinfo = complete_eduid_login(code, code_verifier)
-
-            # Clean up temporary OIDC state
-            session_state.pop('oidc_code_verifier', None)
+            token_data, userinfo = complete_eduid_login(code, app.storage.user)
 
             # Process completion and update application state
             logger.debug("Processing eduID completion")

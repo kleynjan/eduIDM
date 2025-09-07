@@ -79,7 +79,7 @@ def get_all_invitations_with_details() -> List[Dict[str, Any]]:
             # Parse ISO format and convert to readable format
             dt = datetime.fromisoformat(iso_string.replace('Z', '+00:00'))
             return dt.strftime('%d-%m-%Y %H:%M')
-        except:
+        except:  # noqa: E722
             return iso_string
 
     for invitation in storage_data.get('invitations', []):

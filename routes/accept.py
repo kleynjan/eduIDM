@@ -1,7 +1,4 @@
-"""
-Accept invitation routes for eduIDM application.
-Handles the invitation acceptance flow.
-"""
+# /accept route: self-service page showing onboarding progress
 
 from nicegui import ui
 
@@ -50,26 +47,16 @@ def handle_hash_submit():
 
 def handle_eduid_login():
     """Handle eduID login via OIDC"""
+    from nicegui import app
 
     logger.info("Starting eduID login process via OIDC")
 
-    # Get session state
-    session_state = session_manager.session_state
-
     try:
-        # Get authorization URL and PKCE parameters
-        logger.debug("Requesting authorization URL")
-        auth_url, code_verifier, code_challenge = start_eduid_login()
-
-        # Store only the code_verifier temporarily for the callback
-        session_state['oidc_code_verifier'] = code_verifier
-
-        logger.info(f"Authorization URL generated successfully, redirecting to: {auth_url}")
-        # Redirect to OIDC provider
-        ui.navigate.to(auth_url, new_tab=False)
+        # Start eduID login - this handles everything including the redirect
+        start_eduid_login(app.storage.user)
     except Exception as e:
         error_msg = str(e)
-        logger.error(f"Failed to generate authorization URL. Error: {error_msg}")
+        logger.error(f"Failed to start eduID login. Error: {error_msg}")
         ui.notify(f'OIDC Error: {error_msg}', type='negative')
 
 

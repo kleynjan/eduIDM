@@ -1,7 +1,4 @@
-"""
-Guest management routes for eduIDM application.
-Handles guest invitation management and administration.
-"""
+# /invitations page
 
 from nicegui import ui
 from services.storage import (
@@ -18,14 +15,13 @@ def invitations_page():
     ui.page_title(TITLE)
 
     # Create reactive state for the page
-    page_state = {'invitations': get_all_invitations_with_details(), 'groups': get_all_groups()}
+    page_state = {'invitations': [{}], 'groups': get_all_groups()}
 
     with ui.column().classes('max-w-6xl mx-auto p-6'):
 
         # Invitations table
         @ui.refreshable
         def invitations_table():
-            # Refresh data from storage
             page_state['invitations'] = get_all_invitations_with_details()
 
             if not page_state['invitations']:
@@ -51,13 +47,13 @@ def invitations_page():
 
         ui.label(TITLE).classes('text-3xl font-bold mb-6')
         invitations_table()
-        ui.button('Invite...', on_click=lambda: show_invite_dialog(page_state)).classes('mb-4 bg-blue-500 text-white')
+        ui.button('Invite...', on_click=lambda: manual_invite_dialog(page_state)).classes('mb-4 bg-blue-500 text-white')
 
         # Store reference to refresh function for later use
         page_state['refresh_function'] = invitations_table.refresh
 
 
-def show_invite_dialog(page_state):
+def manual_invite_dialog(page_state):
     """Show the invitation dialog"""
     logger.info("Opening invite dialog")
 

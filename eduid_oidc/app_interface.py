@@ -7,7 +7,6 @@ from .oidc_protocol import generate_pkce, build_auth_url, exchange_code, get_use
 from services.storage import load_storage, save_storage, find_invitation_by_hash
 from utils.logging import logger
 
-
 def load_eduid_config() -> Dict[str, Any]:
     with open('config.json', 'r') as f:
         config = json.load(f)
@@ -19,45 +18,66 @@ def load_eduid_config() -> Dict[str, Any]:
     return config
 
 
-def start_eduid_login() -> tuple[str, str, str]:
+def start_eduid_login(user_state: Dict[str, Any]) -> None:
     """
-    Initiate eduID OIDC login flow.
+    Initiate eduID OIDC login flow and redirect to authorization server.
 
-    Returns:
-        Tuple of (authorization_url, code_verifier, code_challenge)
+    Args:
+        user_state: User state dictionary (app.storage.user)
     """
+    from nicegui import ui
+
     logger.info("Starting eduID login process")
     config = load_eduid_config()
 
-    # Generate PKCE parameters
-    code_verifier, code_challenge = generate_pkce()
-    logger.debug(f"Generated PKCE with code_verifier: {code_verifier[:10]}...")
+    try:
+        # Generate PKCE parameters
+        code_verifier, code_challenge = generate_pkce()
+        logger.debug(f"Generated PKCE with code_verifier: {code_verifier[:10]}...")
 
-    # Build authorization URL
-    auth_url = build_auth_url(
-        authorization_endpoint=config['authorization_endpoint'],
-        client_id=config['CLIENT_ID'],
-        redirect_uri=config['REDIRECT_URI'],
-        code_challenge=code_challenge
-    )
+        # Store code_verifier in user state under eduid_oidc namespace
+        user_state['eduid_oidc'] = {'code_verifier': code_verifier}
 
-    logger.info(f"Authorization URL generated successfully: {auth_url}")
-    return auth_url, code_verifier, code_challenge
+        # Build authorization URL
+        auth_url = build_auth_url(
+            authorization_endpoint=config['authorization_endpoint'],
+            client_id=config['CLIENT_ID'],
+            redirect_uri=config['REDIRECT_URI'],
+            code_challenge=code_challenge
+        )
+
+        logger.info(f"Authorization URL generated successfully, redirecting to: {auth_url}")
+        # Redirect to OIDC provider
+        ui.navigate.to(auth_url, new_tab=False)
+    except Exception as e:
+        error_msg = str(e)
+        logger.error(f"Failed to generate authorization URL. Error: {error_msg}")
+        ui.notify(f'OIDC Error: {error_msg}', type='negative')
 
 
-def complete_eduid_login(code: str, code_verifier: str) -> tuple[Dict[str, Any], Dict[str, Any]]:
+def complete_eduid_login(code: str, user_state: Dict[str, Any]) -> tuple[Dict[str, Any], Dict[str, Any]]:
     """
     Complete eduID OIDC login flow.
 
     Args:
         code: authorization code from callback
-        code_verifier: PKCE code verifier from start_eduid_login
+        user_state: User state dictionary (app.storage.user)
 
     Returns:
         Tuple of (token_data, userinfo)
     """
     logger.info("Completing eduID OIDC flow")
-    logger.debug(f"Using code_verifier: {code_verifier[:10]}...")
+
+    # Retrieve code_verifier from user state
+    if 'eduid_oidc' not in user_state or 'code_verifier' not in user_state['eduid_oidc']:
+        raise Exception("No code_verifier found - login session may have expired")
+
+    code_verifier = user_state['eduid_oidc']['code_verifier']
+    logger.debug(f"Retrieved code_verifier: {code_verifier[:10]}...")
+
+    # Clean up OIDC state after retrieving
+    del user_state['eduid_oidc']
+
     config = load_eduid_config()
 
     # Exchange code for token
