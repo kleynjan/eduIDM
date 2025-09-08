@@ -29,21 +29,22 @@ def invitations_page():
             else:
                 with ui.card().classes('w-full'):
                     # Table headers
-                    with ui.row().classes('w-full font-bold border-b pb-2 mb-2'):
-                        ui.label('Groep').classes('flex-1')
-                        ui.label('Guest ID').classes('flex-1')
-                        ui.label('Email').classes('flex-1')
-                        ui.label('Uitgenodigd').classes('flex-1')
-                        ui.label('Geaccepteerd').classes('flex-1')
+                    with ui.row().classes('w-full font-bold border-b py-2'):
+                        ui.label('groep').style('width:10%; text-align:left;')
+                        ui.label('guest_id').style('width:10%; text-align:left;')
+                        ui.label('code').style('width:35%; text-align:left;')
+                        ui.label('uitgenodigd').style('width:15%; text-align:left;')
+                        ui.label('geaccepteerd').style('width:15%; text-align:left;')
 
                     # Table rows
                     for invitation in page_state['invitations']:
                         with ui.row().classes('w-full border-b py-2'):
-                            ui.label(invitation['group_name']).classes('flex-1')
-                            ui.label(invitation['guest_id']).classes('flex-1')
-                            ui.label(invitation['invitation_mail_address']).classes('flex-1')
-                            ui.label(invitation['datetime_invited_formatted']).classes('flex-1')
-                            ui.label(invitation['datetime_accepted_formatted'] or '-').classes('flex-1')
+                            ui.label(invitation['group_name']).style('width:10%; text-align:left;')
+                            ui.label(invitation['guest_id']).style('width:10%; text-align:left;')
+                            ui.label(invitation['invitation_id']).style('width:35%; text-align:left;')
+                            ui.label(invitation['datetime_invited_formatted']).style('width:15%; text-align:left;')
+                            ui.label(invitation['datetime_accepted_formatted']
+                                     or '-').style('width:15%; text-align:left;')
 
         ui.label(TITLE).classes('text-3xl font-bold mb-6')
         invitations_table()

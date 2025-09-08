@@ -1,16 +1,20 @@
 ## eduIDM: matching & verificatie van eduID users
 
-Proof of Concept voor een self-service pagine om interne accounts te verrijken met eduID-identiteit en -attributen.
+Proof of Concept van een self-service pagina om interne accounts te verrijken met eduID-identiteit en -attributen.
 
 Werkwijze (zie ook figuur):
 
-1. Zorg dat intern, in applicatie of IDM/IAM/integratie-tooling, de gebruiker is opgevoerd met een interne of gast-identifier. 
+1. Registreer de gebruiker intern (in applicatie en/of IDM/IAM) met een een interne of gast-identifier. 
 
-2. Maak een uitnodiging aan via eduIDM en stuur de uitnodigingslink naar de gast. 
+2. Maak via de API een uitnodiging aan via eduIDM en onthoud de uitnodigingscode.
 
-3. De gast wordt op een self-service-pagina ontvangen waar we hem/haar alles kunnen laten doen wat nodig is om toegang te kunnen geven. In deze PoC is het stappenplan grotendeels nagebootst. 
+3. Stuur de code naar de gast, bijvoorbeeld per mail.
 
-4. Tenslotte zorgen we dat het eduID-pseudoniem toegevoegd wordt aan de interne identiteit, zodat de gebruiker met eduID kan inloggen op de applicatie die met de uitnodigingsgroep is geassocieerd. 
+4. De gast opent de link naar (of voert de code in op) de self-service-pagina "/accept". Daar leiden we hem/haar door de stappen die nodig zijn om toegang te geven. In deze PoC is het stappenplan grotendeels 'fake'. 
+
+5. eduIDM stuurt het eduID-pseudoniem en -info naar de callback die voor de betreffende groep is geconfigureerd. De applicatie (of IDM/IAM/etc) voegt associeert de eduID met de interne identiteit, en/of vervangt de loginnaam door de eduID EPPN. 
+
+6. Na afronding van het stappenplan tonen we de gast een link naar de applicatie die met de uitnodigingsgroep is geassocieerd, zodat de gast daar direct met eduID kan inloggen.
 
 ![eduIDM Diagram](eduidm_diagram.png)
 
@@ -34,15 +38,24 @@ De data wordt opgeslagen in (services.storage.) storage.json en kan daar direct 
 
 SURF Invite lijkt zich te ontwikkelen tot een RBAC-tool, met als uitgangspunt dat het **volledige** autorisatiepakket voor gasten meegegeven kan worden in rollen -- en dat het dus niet nodig is om de eduID-identiteit te relateren aan een interne identiteit.
 
-Ik denk dat het cruciaal is om die relatie tussen interne identiteiten en eduID's wél te kunnen leggen. Bovendien is er behoefte aan een tool die vanuit lifecycle-perspectief de externe *gebruiker* een goede ervaring geeft -- en de *instelling* zekerheid over identiteit en credentials. 
+eduIDM gaat er vanuit dat het cruciaal is om die relatie tussen interne identiteiten en eduID's wél te leggen. De self-service pagina zorgt er daarbij voor dat de externe *gebruiker* een goede 'onboarding' ervaring heeft en dat de  *instelling* zekerheid heeft wie er inlogt.  
 
 <img src="screenshot.png" alt="screenshot" width="400" style="float:right;"/>
 
 ### Installatie
 
-* Maak in je SP Dashboard een OIDC RP client endpoint aan en kopieer deze gegevens naar config.json
-* Maak een python environment o.b.v. de requirements.txt. Clone het project.
-* `python main.py` om de server te starten op `http://localhost:8080/`
+```
+mkdir eduidm && cd $_
+git clone https://github.com/kleynjan/eduIDM.git .
+conda create -n eduidm python=3
+conda activate eduidm
+pip install -r requirements.txt
+```
+
+Maak in je SP Dashboard een OIDC RP client endpoint aan en kopieer deze gegevens naar `config.json`
+
+Start de applicatie met `python main.py` en ga met je browser naar `http://localhost:8080/invitations` of `http://localhost:8080/groups`
+
 
 ### TODO
 * POST terug naar de backend (al dan niet met SCIM). 
