@@ -3,27 +3,19 @@
 from nicegui import app, ui
 
 from eduid_oidc.app_interface import start_eduid_login
+from services.logging import logger
 from services.scim_service import scim_provisioning
 from services.session_manager import session_manager
-from services.storage import find_invitation_by_code, find_group_by_id
-from utils.logging import logger
+from services.storage import (
+    find_group_by_id,
+    find_invitation_by_code,
+    mark_invitation_accepted,
+)
 
-def create_step_card(step_num: int, title: str, is_completed: bool, content_func):
-    """Create a step card with conditional content"""
-    status_color = 'positive' if is_completed else 'grey'
-    status_icon = 'check_circle' if is_completed else 'radio_button_unchecked'
-
-    with ui.card().classes('w-full mb-4'):
-        with ui.row().classes('items-center w-full'):
-            ui.icon(status_icon, color=status_color).classes('text-2xl mr-4')
-            with ui.column().classes('flex-grow'):
-                ui.label(title).classes('text-lg font-semibold')
-                content_func()
 
 def process_invite_code(invite_code: str):
-    """
-    Validate and apply invite code to session state if valid.
-    """
+    """Check invite code; if valid, add invite code & group details to session state"""
+
     invitation = find_invitation_by_code(invite_code.strip())
     if invitation:
         group = find_group_by_id(invitation['group_id'])
@@ -35,7 +27,6 @@ def process_invite_code(invite_code: str):
             state['redirect_url'] = group.get('redirect_url', '')
             state['redirect_text'] = group.get('redirect_text', '')
             state['steps_completed']['code_entered'] = True
-
             ui.navigate.to('/accept')
         else:
             logger.error(f"Group not found for group_id: {invitation['group_id']}")
@@ -44,23 +35,22 @@ def process_invite_code(invite_code: str):
         logger.warning(f"Invalid invite_code attempted: {invite_code}")
         ui.notify('Ongeldige uitnodigingscode', type='negative')
 
-def handle_eduid_login():
-    """Handle eduID login via OIDC"""
-
-    logger.info("Starting eduID login process via OIDC")
-
-    try:
-        # Start eduID login - this handles everything including the redirect
-        start_eduid_login(app.storage.user)
-    except Exception as e:
-        error_msg = str(e)
-        logger.error(f"Failed to start eduID login. Error: {error_msg}")
-        ui.notify(f'OIDC Error: {error_msg}', type='negative')
-
 
 @ui.page('/accept')
 @ui.page('/accept/{invite_code}')
 def accept_invitation(invite_code: str = ""):
+    def create_step_card(step_num: int, title: str, is_completed: bool, content_func):
+        """Create a step card with conditional content"""
+        status_color = 'positive' if is_completed else 'grey'
+        status_icon = 'check_circle' if is_completed else 'radio_button_unchecked'
+
+        with ui.card().classes('w-full mb-4'):
+            with ui.row().classes('items-center w-full'):
+                ui.icon(status_icon, color=status_color).classes('text-2xl mr-4')
+                with ui.column().classes('flex-grow'):
+                    ui.label(title).classes('text-lg font-semibold')
+                    content_func()
+
     session_manager.initialize_user_state()
     state = session_manager.state
     logger.debug(f"Accept page, current user state: {state}")
@@ -71,14 +61,10 @@ def accept_invitation(invite_code: str = ""):
 
     suffix = f"{state['group_name']}" if state['group_name'] else ""
     title = f"Uitnodiging - {suffix}" if suffix else "Uitnodiging"
-    welkom = f"Welkom bij {suffix}" if suffix else "Welkom"
     ui.page_title(title)
 
     with ui.column().classes('max-w-4xl mx-auto p-6'):
-        # Header
-        # ui.label().bind_text_from(state, 'group_name',
-        #                           lambda name: f'Welkom ').classes('text-3xl font-bold mb-2')
-        ui.label(welkom).classes('text-3xl font-bold mb-2')
+        ui.label(f"Welkom bij {suffix}" if suffix else "Welkom").classes('text-3xl font-bold mb-2')
         ui.label('Volg het stappenplan hieronder om uw uitnodiging te accepteren.').classes('text-lg mb-6')
 
         # Step 1: Code input
@@ -100,7 +86,8 @@ def accept_invitation(invite_code: str = ""):
             if state['invite_code'] and state['steps_completed']['code_entered']:
                 if not state['steps_completed']['eduid_login']:
                     with ui.column().classes('mt-2'):
-                        ui.button('Inloggen met eduID', on_click=handle_eduid_login).classes('mr-4')
+                        ui.button('Inloggen met eduID', on_click=lambda x: start_eduid_login(
+                            app.storage.user)).classes('mr-4')
                         with ui.row().classes('items-center mt-2'):
                             ui.label('Nog geen eduID?').classes('text-sm')
                             ui.link('Maak hem hier aan', 'https://eduid.nl/home', new_tab=True).classes('text-sm ml-1')
@@ -156,6 +143,7 @@ def accept_invitation(invite_code: str = ""):
         # Step 4: Completion
         def step4_content():
             if state['steps_completed']['mfa_verified']:
+                mark_invitation_accepted(state['invite_code'])      # update datetime_accepted
                 with ui.column().classes('mt-2'):
                     ui.label('✓ Uw eduID is nu gekoppeld!').classes('text-green-600 mb-2')
                     redirect_url = state.get('redirect_url', 'https://canvas.uva.nl/')

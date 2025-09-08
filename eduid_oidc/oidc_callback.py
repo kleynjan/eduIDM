@@ -2,9 +2,8 @@
 # when eduID login is completed, calls complete_eduid_login with updated session_state
 
 from nicegui import ui
-from services.session_manager import session_manager
-from .app_interface import complete_eduid_login, process_eduid_completion
-from utils.logging import logger
+from .app_interface import complete_eduid_login
+from services.logging import logger
 
 
 @ui.page('/oidc_callback')
@@ -41,11 +40,9 @@ def oidc_callback(code: str = "", error: str = ""):
             # Complete eduID login using app.storage.user
             from nicegui import app
             logger.debug("Completing eduID login flow")
-            token_data, userinfo = complete_eduid_login(code, app.storage.user)
 
-            # Process completion and update application state
-            logger.debug("Processing eduID completion")
-            process_eduid_completion(userinfo, session_manager.state)
+            # Complete login and update application state
+            complete_eduid_login(code, app.storage.user)
 
             logger.info("eduID authentication completed successfully")
 
@@ -68,7 +65,6 @@ def oidc_callback(code: str = "", error: str = ""):
 
 @ui.page('/oidc_error')
 def oidc_error_page():
-    """Display OIDC error page"""
     logger.error("OIDC error page accessed")
 
     ui.page_title('OIDC Authentication Error')

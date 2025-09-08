@@ -1,6 +1,6 @@
 import logging
-from nicegui import ui, run
-from utils.logging import setup_logging, logger
+from nicegui import ui
+from services.logging import setup_logging, logger
 
 # register routes
 import routes.api

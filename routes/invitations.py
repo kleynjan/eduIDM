@@ -4,7 +4,7 @@ from nicegui import ui
 from services.storage import (
     create_invitation, get_all_invitations_with_details, get_all_groups
 )
-from utils.logging import logger
+from services.logging import logger
 
 TITLE = "Invitations"
 

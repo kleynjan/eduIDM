@@ -1,11 +1,22 @@
 # eduID integratie: OIDC -> app
 
 import json
-from datetime import datetime
-from typing import Dict, Any, Optional
-from .oidc_protocol import generate_pkce, build_auth_url, exchange_code, get_userinfo, load_well_known_config
-from services.storage import find_invitation_by_code, update_invitation
-from utils.logging import logger
+from typing import Any, Dict
+
+from nicegui import ui
+
+from services.logging import logger
+from services.session_manager import session_manager
+from services.storage import update_invitation
+
+from .oidc_protocol import (
+    build_auth_url,
+    exchange_code,
+    generate_pkce,
+    get_userinfo,
+    load_well_known_config,
+)
+
 
 def load_eduid_config() -> Dict[str, Any]:
     with open('config.json', 'r') as f:
@@ -18,14 +29,13 @@ def load_eduid_config() -> Dict[str, Any]:
     return config
 
 
-def start_eduid_login(user_state: Dict[str, Any]) -> None:
+def start_eduid_login(user_state: Dict[str, Any]):
     """
     Initiate eduID OIDC login flow and redirect to authorization server.
 
     Args:
-        user_state: User state dictionary (app.storage.user)
+        user_state: dictionary to carry oidc state data
     """
-    from nicegui import ui
 
     logger.info("Starting eduID login process")
     config = load_eduid_config()
@@ -55,32 +65,29 @@ def start_eduid_login(user_state: Dict[str, Any]) -> None:
         ui.notify(f'OIDC Error: {error_msg}', type='negative')
 
 
-def complete_eduid_login(code: str, user_state: Dict[str, Any]) -> tuple[Dict[str, Any], Dict[str, Any]]:
+def complete_eduid_login(code: str, user_state: Dict[str, Any]):
     """
-    Complete eduID OIDC login flow.
+    Complete eduID OIDC login flow and update application state.
 
     Args:
         code: authorization code from callback
-        user_state: User state dictionary (app.storage.user)
-
-    Returns:
-        Tuple of (token_data, userinfo)
+        user_state: dictionary to carry oidc state data
     """
     logger.info("Completing eduID OIDC flow")
 
-    # Retrieve code_verifier from user state
+    # retrieve code_verifier from user state
     if 'eduid_oidc' not in user_state or 'code_verifier' not in user_state['eduid_oidc']:
         raise Exception("No code_verifier found - login session may have expired")
 
     code_verifier = user_state['eduid_oidc']['code_verifier']
     logger.debug(f"Retrieved code_verifier: {code_verifier[:10]}...")
 
-    # Clean up OIDC state after retrieving
+    # clean up OIDC state after retrieving
     del user_state['eduid_oidc']
 
     config = load_eduid_config()
 
-    # Exchange code for token
+    # exchange code for token
     logger.debug("Exchanging authorization code for access token")
     token_data = exchange_code(
         token_endpoint=config['token_endpoint'],
@@ -90,8 +97,8 @@ def complete_eduid_login(code: str, user_state: Dict[str, Any]) -> tuple[Dict[st
         code=code,
         code_verifier=code_verifier
     )
-    logger.debug(f"Token exchange successful, token data: {token_data}")
 
+    # getting userinfo
     logger.debug("Retrieving user info from eduID")
     userinfo = get_userinfo(
         userinfo_endpoint=config['userinfo_endpoint'],
@@ -99,51 +106,27 @@ def complete_eduid_login(code: str, user_state: Dict[str, Any]) -> tuple[Dict[st
     )
     logger.info(f"User info retrieved successfully for user: {userinfo.get('sub', '')}")
 
-    return token_data, userinfo
+    # update onboarding state
+    onboarding_state = session_manager.state
+    onboarding_state['eduid_userinfo'] = userinfo
+    onboarding_state['steps_completed']['eduid_login'] = True
 
-
-def process_eduid_completion(userinfo: Dict[str, Any], user_state: Dict[str, Any]) -> None:
-    """
-    Update application state after successful eduid login.
-
-    Args:
-        userinfo: User information from eduID
-        user_state: User state dictionary from session manager
-    """
-    logger.info("Updating application state with eduID user info")
-
-    user_state['steps_completed']['eduid_login'] = True
-    user_state['eduid_userinfo'] = userinfo
-
-    # Update storage with completion
-    current_invite_code = user_state['invite_code']
+    # update invitation
+    current_invite_code = onboarding_state.get('invite_code')
     if current_invite_code:
         logger.debug(f"Updating storage for invite_code: {current_invite_code}")
-        invitation = find_invitation_by_code(current_invite_code)
-        if invitation and not invitation.get('datetime_accepted'):
-            # Extract eduperson_principal_name and store as eppn
-            userinfo_copy = userinfo.copy()
-            eppn = userinfo_copy.pop('eduperson_principal_name', '')
 
-            # Update invitation with eduID data
-            success = update_invitation(
-                current_invite_code,
-                datetime_accepted=datetime.utcnow().isoformat() + 'Z',
-                eppn=eppn,
-                eduid_props=userinfo_copy
-            )
+        userinfo_copy = userinfo.copy()
+        eppn = userinfo_copy.pop('eduperson_principal_name', '')
 
-            if success:
-                logger.info(f"Set acceptance timestamp for guest_id: {invitation['guest_id']}")
-                logger.info(f"Stored eduID properties for guest_id: {invitation['guest_id']}, eppn: {eppn}")
-                logger.info("eduID login completed successfully")
-            else:
-                logger.error(f"Failed to update invitation for invite_code: {current_invite_code}")
+        success = update_invitation(
+            current_invite_code,
+            eppn=eppn,
+            eduid_props=userinfo_copy
+        )
+        if success:
+            logger.info(f"eduID login for eppn: {eppn} completed successfully")
         else:
-            logger.warning(f"Invitation already accepted or not found for invite_code: {current_invite_code}")
+            logger.error(f"Failed to update invitation for invite_code: {current_invite_code}")
     else:
-        logger.warning("No current invite_code found in user state during eduID completion")
-
-
-# Note: These functions are no longer needed since we don't maintain OIDC state
-# The application only stores the final userinfo result
+        logger.warning("No current invite_code found in onboarding state during eduID completion")

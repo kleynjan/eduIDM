@@ -2,11 +2,10 @@
 Session state management utilities for eduIDM application.
 Provides a singleton session manager that works with NiceGUI reactive binding.
 """
-
 import uuid
-from typing import Dict, Any
+from typing import Any, Dict
 from nicegui import app
-from utils.logging import logger
+from services.logging import logger
 
 
 class SessionManager:
@@ -18,7 +17,7 @@ class SessionManager:
     def __new__(cls):
         if cls._instance is None:
             cls._instance = super().__new__(cls)
-            cls._server_session_key = str(uuid.uuid4())
+            cls._server_session_key = 'session_' + str(uuid.uuid4())
         return cls._instance
 
     @property

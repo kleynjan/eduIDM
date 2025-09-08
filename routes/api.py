@@ -4,13 +4,17 @@ Provides JSON API access to invitations and groups data.
 """
 
 import json
+
+from fastapi import HTTPException, Request
 from nicegui import app
-from fastapi import Request, HTTPException
+
+from services.logging import logger
 from services.storage import (
-    create_invitation, get_all_invitations_with_details, get_all_groups,
-    find_group_by_name
+    create_invitation,
+    find_group_by_name,
+    get_all_groups,
+    get_all_invitations_with_details,
 )
-from utils.logging import logger
 
 
 # GET /api/invitations - return all invitations

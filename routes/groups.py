@@ -1,25 +1,20 @@
 # /groups page
 
 from nicegui import ui
-from services.storage import (
-    get_all_groups, create_group, update_group, delete_group
-)
-from utils.logging import logger
 
-TITLE = "Groups"
+from services.logging import logger
+from services.storage import create_group, delete_group, get_all_groups, update_group
+
+TITLE = "Groepen"
 
 @ui.page('/groups')
 def groups_page():
     logger.debug("groups page accessed")
 
     ui.page_title(TITLE)
-
-    # Create reactive state for the page
     page_state = {'groups': []}
 
     with ui.column().classes('mx-auto p-6').style('width:900px;'):
-
-        # Groups table
         @ui.refreshable
         def groups_table():
             page_state['groups'] = get_all_groups()
@@ -57,14 +52,13 @@ def groups_page():
             page_state)).classes('mb-4 bg-blue-500 text-white')
 
         # Store reference to refresh function for later use
-        page_state['refresh_function'] = groups_table.refresh
+        page_state['refresh_function'] = groups_table.refresh   # type: ignore
 
 
 def add_group_dialog(page_state):
     """Show the add group dialog"""
     logger.info("Opening add group dialog")
 
-    # Dialog state
     dialog_state = {
         'name': '',
         'redirect_url': '',
@@ -72,10 +66,8 @@ def add_group_dialog(page_state):
     }
 
     def handle_add():
-        """Handle the add button click"""
         logger.info("Processing group creation")
 
-        # Validate inputs
         if not dialog_state['name'].strip():
             ui.notify('Groepsnaam is verplicht', type='negative')
             return
@@ -95,16 +87,10 @@ def add_group_dialog(page_state):
                 dialog_state['redirect_url'].strip(),
                 dialog_state['redirect_text'].strip()
             )
-
             logger.info(f"Group created successfully: {group_id}")
-
-            # Close the dialog
             add_dialog.close()
-
-            # Show confirmation
             ui.notify(f'Groep "{dialog_state["name"]}" is aangemaakt', type='positive')
 
-            # Refresh the table
             if 'refresh_function' in page_state:
                 page_state['refresh_function']()
 
@@ -113,11 +99,10 @@ def add_group_dialog(page_state):
             ui.notify(f'Fout bij het aanmaken van groep: {str(e)}', type='negative')
 
     def handle_cancel():
-        """Handle the cancel button click"""
         logger.info("Add group dialog cancelled")
         add_dialog.close()
 
-    # Create the dialog
+    # create dialog
     with ui.dialog() as add_dialog, ui.card().classes('w-96'):
         ui.label('Nieuwe Groep').classes('text-xl font-bold mb-4')
 
@@ -145,7 +130,6 @@ def add_group_dialog(page_state):
 
 
 def edit_group_dialog(group, page_state):
-    """Show the edit group dialog"""
     logger.info(f"Opening edit group dialog for group: {group['id']}")
 
     # Dialog state - pre-fill with current values
@@ -156,10 +140,8 @@ def edit_group_dialog(group, page_state):
     }
 
     def handle_save():
-        """Handle the save button click"""
         logger.info(f"Processing group update for: {group['id']}")
 
-        # Validate inputs
         if not dialog_state['name'].strip():
             ui.notify('Groepsnaam is verplicht', type='negative')
             return
@@ -197,11 +179,10 @@ def edit_group_dialog(group, page_state):
             ui.notify(f'Fout bij het bijwerken van groep: {str(e)}', type='negative')
 
     def handle_cancel():
-        """Handle the cancel button click"""
         logger.info("Edit group dialog cancelled")
         edit_dialog.close()
 
-    # Create the dialog
+    # edit dialog
     with ui.dialog() as edit_dialog, ui.card().classes('w-96'):
         ui.label('Groep Bewerken').classes('text-xl font-bold mb-4')
 
@@ -229,17 +210,13 @@ def edit_group_dialog(group, page_state):
 
 
 def delete_group_dialog(group, page_state):
-    """Show the delete group confirmation dialog"""
     logger.info(f"Opening delete group dialog for group: {group['id']}")
 
     def handle_delete():
-        """Handle the delete button click"""
         logger.info(f"Processing group deletion for: {group['id']}")
 
         try:
-            # Delete the group
             success = delete_group(group['id'])
-
             if success:
                 logger.info(f"Group deleted successfully: {group['id']}")
                 delete_dialog.close()
@@ -256,18 +233,16 @@ def delete_group_dialog(group, page_state):
             ui.notify(f'Fout bij het verwijderen van groep: {str(e)}', type='negative')
 
     def handle_cancel():
-        """Handle the cancel button click"""
         logger.info("Delete group dialog cancelled")
         delete_dialog.close()
 
-    # Create the dialog
+    # deletion dialog
     with ui.dialog() as delete_dialog, ui.card().classes('w-96'):
         ui.label('Groep Verwijderen').classes('text-xl font-bold mb-4')
 
         ui.label(f'Weet je zeker dat je de groep "{group["name"]}" wilt verwijderen?').classes('mb-4')
         ui.label('Deze actie kan niet ongedaan worden gemaakt.').classes('text-red-500 mb-4')
 
-        # Buttons
         with ui.row().classes('w-full justify-end gap-2'):
             ui.button('Annuleren', on_click=handle_cancel).classes('bg-gray-500 text-white')
             ui.button('Verwijderen', on_click=handle_delete).classes('bg-red-500 text-white')

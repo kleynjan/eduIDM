@@ -1,11 +1,7 @@
-"""
-Logging configuration for the package.
-"""
-
 import logging
 
 # Configure logger
-logger = logging.getLogger('ng_loba')
+logger = logging.getLogger('eduidm')
 
 def setup_logging(
     level=logging.INFO,
