@@ -12,7 +12,7 @@ Werkwijze (zie ook figuur):
 
 4. De gast opent de link naar (of voert de code in op) de self-service-pagina "/accept". Daar leiden we hem/haar door de stappen die nodig zijn om toegang te geven. In deze PoC is het stappenplan grotendeels 'fake'. 
 
-5. eduIDM stuurt het eduID-pseudoniem en -info naar de callback die voor de betreffende groep is geconfigureerd. De applicatie (of IDM/IAM/etc) voegt associeert de eduID met de interne identiteit, en/of vervangt de loginnaam door de eduID EPPN. 
+5. eduIDM stuurt het eduID-pseudoniem en -info naar de callback die voor de betreffende groep is geconfigureerd. De applicatie (of IDM/IAM/etc) associeert de eduID met de interne identiteit, en/of vervangt de loginnaam door de eduID EPPN. 
 
 6. Na afronding van het stappenplan tonen we de gast een link naar de applicatie die met de uitnodigingsgroep is geassocieerd, zodat de gast daar direct met eduID kan inloggen.
 
@@ -32,7 +32,7 @@ Interactief:
 | /invitations              | Bekijk uitnodigingen + interactief aanmaken van nieuwe           |
 | /groups                   | Beheer groepen                                                   |
 
-De data wordt opgeslagen in (services.storage.) storage.json en kan daar direct worden bewonderd en aangepast.
+Voor deze PoC wordt de data opgeslagen in (services.storage.) storage.json en kan daar direct worden bewonderd en aangepast. Voor een productie-app ligt een database meer voor de hand.
 
 ### Waarom niet eduID Invite
 
