@@ -38,7 +38,7 @@ Voor deze PoC wordt de data opgeslagen in (services.storage.) storage.json en ka
 
 SURF Invite lijkt zich te ontwikkelen tot een RBAC-tool, met als uitgangspunt dat het **volledige** autorisatiepakket voor gasten meegegeven kan worden in rollen -- en dat het dus niet nodig is om de eduID-identiteit te relateren aan een interne identiteit.
 
-eduIDM gaat er vanuit dat het cruciaal is om die relatie tussen interne identiteiten en eduID's wél te leggen. De self-service pagina zorgt er daarbij voor dat de externe *gebruiker* een goede 'onboarding' ervaring heeft en dat de  *instelling* zekerheid heeft wie er inlogt.  
+Hier kiezen we een ander vertrekpunt, nl. dat het cruciaal is om die relatie tussen interne identiteiten en eduID's wél te kunnen leggen. Behalve deze matching van identiteiten zorgt de self-service pagina ervoor dat de externe *gebruiker* een goede 'onboarding' ervaring heeft en dat de *instelling* zekerheid heeft wie er inlogt.  
 
 <img src="screenshot.png" alt="screenshot" width="400" style="float:right;"/>
 
