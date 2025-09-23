@@ -55,13 +55,14 @@ def create_invitation(guest_id: str, group_id: str, invitation_mail_address: str
     # Generate new invitation ID
     invitation_id = str(uuid.uuid4()).replace('-', '')
 
-    # Create invitation record with empty eppn and eduid_props (will be filled when accepted)
+    # Create invitation record with empty eppn, eduid_props, and datetime_accepted (will be filled when accepted)
     invitation = {
         "invitation_id": invitation_id,
         "guest_id": guest_id,
         "group_id": group_id,
         "invitation_mail_address": invitation_mail_address,
         "datetime_invited": datetime.utcnow().isoformat() + 'Z',
+        "datetime_accepted": "",
         "eppn": "",
         "eduid_props": {}
     }
@@ -72,7 +73,7 @@ def create_invitation(guest_id: str, group_id: str, invitation_mail_address: str
 
 def mark_invitation_accepted(invite_code: str):
     invitation = find_invitation_by_code(invite_code)
-    if invitation and not invitation['datetime_accepted']:
+    if invitation and not invitation.get('datetime_accepted', ''):
         update_invitation(
             invite_code,
             datetime_accepted=datetime.utcnow().isoformat() + 'Z',
@@ -100,7 +101,7 @@ def get_all_invitations_with_details() -> List[Dict[str, Any]]:
 
         # Format dates
         datetime_invited_formatted = format_datetime(invitation['datetime_invited'])
-        datetime_accepted_formatted = format_datetime(invitation['datetime_accepted'])
+        datetime_accepted_formatted = format_datetime(invitation.get('datetime_accepted', ''))
 
         invitation_detail = {
             'invitation_id': invitation['invitation_id'],
@@ -111,7 +112,7 @@ def get_all_invitations_with_details() -> List[Dict[str, Any]]:
             'datetime_invited_formatted': datetime_invited_formatted,
             'datetime_accepted_formatted': datetime_accepted_formatted,
             'datetime_invited': invitation['datetime_invited'],
-            'datetime_accepted': invitation['datetime_accepted']
+            'datetime_accepted': invitation.get('datetime_accepted', '')
         }
         invitations_with_details.append(invitation_detail)
 

@@ -17,6 +17,35 @@
             "datetime_accepted": "",
             "eppn": "",
             "eduid_props": {}
+        },
+        {
+            "invitation_id": "fac5ad4ef77e44b1a79b4d1789d3685d",
+            "guest_id": "peter123",
+            "group_id": "70e90d16-8b09-4241-899e-eb6334309117",
+            "invitation_mail_address": "peter.kleynjan@quantis.nl",
+            "datetime_invited": "2025-09-23T09:15:11.563019Z",
+            "datetime_accepted": "2025-09-23T09:22:06.254753Z",
+            "eppn": "3f7a3e0c-e10a-4af5-b2b0-023b7bb37775@eduid.nl",
+            "eduid_props": {
+                "acr": "urn:oasis:names:tc:SAML:2.0:ac:classes:Password",
+                "eduperson_affiliation": [
+                    "affiliate"
+                ],
+                "eduperson_scoped_affiliation": [
+                    "affiliate@eduid.nl"
+                ],
+                "email": "peter.kleynjan@quantis.nl",
+                "email_verified": true,
+                "family_name": "Kleynjan-Test",
+                "given_name": "Peter",
+                "name": "Peter Kleynjan-Test",
+                "schac_home_organization": "eduid.nl",
+                "sub": "61ed5b78b5448816d581f3600f5f6abe86374c7a",
+                "uids": [
+                    "3f7a3e0c-e10a-4af5-b2b0-023b7bb37775"
+                ],
+                "updated_at": 1758619318
+            }
         }
     ]
 }
