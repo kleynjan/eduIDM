@@ -1,7 +1,7 @@
 # eduID integratie: OIDC -> app
 
 import json
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 from nicegui import ui
 
@@ -29,15 +29,16 @@ def load_eduid_config() -> Dict[str, Any]:
     return config
 
 
-def start_eduid_login(user_state: Dict[str, Any]):
+def start_eduid_login(user_state: Dict[str, Any], acr_values: Optional[str] = None):
     """
     Initiate eduID OIDC login flow and redirect to authorization server.
 
     Args:
         user_state: dictionary to carry oidc state data
+        acr_values: optional ACR values to request specific authentication strength
     """
 
-    logger.info("Starting eduID login process")
+    logger.info(f"Starting eduID login process{' with ACR: ' + acr_values if acr_values else ''}")
     config = load_eduid_config()
 
     try:
@@ -53,7 +54,8 @@ def start_eduid_login(user_state: Dict[str, Any]):
             authorization_endpoint=config['authorization_endpoint'],
             client_id=config['CLIENT_ID'],
             redirect_uri=config['REDIRECT_URI'],
-            code_challenge=code_challenge
+            code_challenge=code_challenge,
+            acr_values=acr_values
         )
 
         logger.info(f"Authorization URL generated successfully, redirecting to: {auth_url}")

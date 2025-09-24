@@ -1,16 +1,12 @@
-import logging
 import json
-import os
-
-from nicegui import ui, app
-
-import eduid_oidc.oidc_callback
-import routes.accept
+from nicegui import app, ui
 
 # register routes
+import eduid_oidc.oidc_callback
+import routes.accept
 import routes.api
 import routes.landing
-import routes.m         # all /m routes
+import routes.m  # all /m routes
 from services.logging import logger, setup_logging
 
 try:

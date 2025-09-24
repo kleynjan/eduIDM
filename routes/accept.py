@@ -108,24 +108,22 @@ def accept_invitation(invite_code: str = ""):
                 if state['steps_completed']['mfa_verified']:
                     ui.label('✓ MFA is geconfigureerd').classes('text-green-600 mt-2')
                 else:
-                    # Check if ACR contains "Password" - meaning MFA is required
-                    if 'Password' in acr:
-                        with ui.column().classes('mt-2'):
-                            ui.label('Een tweede factor is hier vereist. Installeer de eduID app.').classes(
-                                'text-orange-600 mb-2')
-
-                            def configure_mfa_dummy():
-                                state['steps_completed']['mfa_verified'] = True
-                                state['steps_completed']['completed'] = True
-                                state['show_scim_dialog'] = True
-                                ui.notify('Yep, uw tweede factor is nu zogenaamd actief!', type='positive')
-                                ui.navigate.to('/accept')  # Refresh the page to show updated state
-
-                            ui.button('Hmm, laten we net doen alsof',
-                                      on_click=configure_mfa_dummy).classes('bg-orange-500 text-white')
+                    # Check current ACR to determine if stronger authentication is needed
+                    if 'https://refeds.org/profile/mfa' in acr:
+                        # MFA already satisfied
+                        state['steps_completed']['mfa_verified'] = True
+                        state['steps_completed']['completed'] = True
+                        state['show_scim_dialog'] = True
+                        ui.navigate.to('/accept')
                     else:
-                        # No Password in ACR or no ACR info - MFA already configured
-                        ui.label('✓ MFA is al geconfigureerd').classes('text-green-600 mt-2')
+                        # Need stronger authentication
+                        with ui.column().classes('mt-2'):
+                            ui.label('Sterke authenticatie is vereist voor deze stap.').classes('text-orange-600 mb-2')
+                            ui.button('Verifieer met sterke authenticatie',
+                                      on_click=lambda: start_eduid_login(
+                                          app.storage.user,
+                                          acr_values='https://refeds.org/profile/mfa'
+                                      )).classes('bg-orange-500 text-white')
 
                 # Show eduID attributes if available
                 if userinfo:

@@ -8,7 +8,7 @@ import hashlib
 import os
 import re
 import requests
-from typing import Dict, Any, Tuple
+from typing import Dict, Any, Tuple, Optional
 
 
 def generate_pkce() -> Tuple[str, str]:
@@ -31,7 +31,8 @@ def build_auth_url(
     client_id: str,
     redirect_uri: str,
     code_challenge: str,
-    scope: str = "openid profile email"
+    scope: str = "openid profile email",
+    acr_values: Optional[str] = None
 ) -> str:
     """
     Build OIDC authorization URL.
@@ -42,6 +43,7 @@ def build_auth_url(
         redirect_uri: Callback URL
         code_challenge: PKCE code challenge
         scope: OAuth2 scopes
+        acr_values: Authentication Context Class Reference values
 
     Returns:
         Authorization URL
@@ -54,6 +56,9 @@ def build_auth_url(
         "code_challenge": code_challenge,
         "code_challenge_method": "S256",
     }
+
+    if acr_values:
+        params["acr_values"] = acr_values
 
     param_string = "&".join([f"{k}={requests.utils.quote(str(v))}" for k, v in params.items()])  # type: ignore
     return f"{authorization_endpoint}?{param_string}"

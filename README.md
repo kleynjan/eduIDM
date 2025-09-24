@@ -57,13 +57,14 @@ Maak in je SP Dashboard een OIDC RP client endpoint aan en kopieer deze gegevens
 
 Start de applicatie met `python main.py` en ga met je browser naar `http://localhost:8085/`
 
-### License
-
-This project is licensed under the GNU Affero General Public License (AGPL) version 3. 
-
 ### TODO
 * POST terug naar de backend (al dan niet met SCIM). 
 * POST naar backend in aparte task onderbrengen i.v.m. retries.
+* Verzenden van uitnodiging per mail. 
 * Redirect/initiëren van tweede factor.
 * Allerlei denkbare verificaties (tweede login bij instelling, iDIN, affiliatie)
 * Styling via SCSS i.p.v. random Tailwind noise
+
+### License
+This project is licensed under the GNU Affero General Public License (AGPL) version 3. 
+
