@@ -46,6 +46,16 @@
             "datetime_accepted": "",
             "eppn": "",
             "eduid_props": {}
+        },
+        {
+            "invitation_id": "e7f65e53228f4b989b4bbd99f8cf8033",
+            "guest_id": "jansen123",
+            "group_id": "70e90d16-8b09-4241-899e-eb6334309117",
+            "invitation_mail_address": "jan@jansen.nl",
+            "datetime_invited": "2025-09-24T14:22:31.426945Z",
+            "datetime_accepted": "",
+            "eppn": "",
+            "eduid_props": {}
         }
     ]
 }

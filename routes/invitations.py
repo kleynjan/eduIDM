@@ -5,10 +5,11 @@ from services.storage import (
     create_invitation, get_all_invitations_with_details, get_all_groups
 )
 from services.logging import logger
+from utils.navigation import create_navigation_header
 
 TITLE = "Invitations"
 
-@ui.page('/invitations')
+@ui.page('/m/invitations')
 def invitations_page():
     logger.debug("invitations page accessed")
 
@@ -18,6 +19,8 @@ def invitations_page():
     page_state = {'invitations': [{}], 'groups': get_all_groups()}
 
     with ui.column().classes('mx-auto p-6').style('width:900px;'):
+        # Add navigation header
+        create_navigation_header('invitations')
 
         # Invitations table
         @ui.refreshable

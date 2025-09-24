@@ -4,10 +4,11 @@ from nicegui import ui
 
 from services.logging import logger
 from services.storage import create_group, delete_group, get_all_groups, update_group
+from utils.navigation import create_navigation_header
 
 TITLE = "Groepen"
 
-@ui.page('/groups')
+@ui.page('/m/groups')
 def groups_page():
     logger.debug("groups page accessed")
 
@@ -15,6 +16,9 @@ def groups_page():
     page_state = {'groups': []}
 
     with ui.column().classes('mx-auto p-6').style('width:900px;'):
+        # Add navigation header
+        create_navigation_header('groups')
+
         @ui.refreshable
         def groups_table():
             page_state['groups'] = get_all_groups()
