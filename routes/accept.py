@@ -87,7 +87,9 @@ def accept_invitation(invite_code: str = ""):
                 if not state['steps_completed']['eduid_login']:
                     with ui.column().classes('mt-2'):
                         ui.button('Inloggen met eduID', on_click=lambda x: start_eduid_login(
-                            app.storage.user)).classes('mr-4')
+                            app.storage.user, force_login=True)).classes('mr-4')
+                        # ui.button('Inloggen met eduID', on_click=lambda x: start_eduid_login(
+                        #     app.storage.user, force_login=False)).classes('mr-4')
                         with ui.row().classes('items-center mt-2'):
                             ui.label('Nog geen eduID?').classes('text-sm')
                             ui.link('Maak hem hier aan', 'https://eduid.nl/home', new_tab=True).classes('text-sm ml-1')
@@ -109,7 +111,9 @@ def accept_invitation(invite_code: str = ""):
                     ui.label('✓ MFA is geconfigureerd').classes('text-green-600 mt-2')
                 else:
                     # Check current ACR to determine if stronger authentication is needed
-                    if 'https://refeds.org/profile/mfa' in acr:
+                    acr_policy = 'https://refeds.org/profile/mfa'
+                    # acr_policy = 'https://eduid.nl/trust/linked-institution'
+                    if acr_policy in acr:
                         # MFA already satisfied
                         state['steps_completed']['mfa_verified'] = True
                         state['steps_completed']['completed'] = True
@@ -122,7 +126,8 @@ def accept_invitation(invite_code: str = ""):
                             ui.button('Verifieer met sterke authenticatie',
                                       on_click=lambda: start_eduid_login(
                                           app.storage.user,
-                                          acr_values='https://refeds.org/profile/mfa'
+                                          acr_values=acr_policy,
+                                          force_login=True
                                       )).classes('bg-orange-500 text-white')
 
                 # Show eduID attributes if available

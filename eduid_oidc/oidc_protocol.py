@@ -32,7 +32,8 @@ def build_auth_url(
     redirect_uri: str,
     code_challenge: str,
     scope: str = "openid profile email",
-    acr_values: Optional[str] = None
+    acr_values: Optional[str] = None,
+    prompt: Optional[str] = None
 ) -> str:
     """
     Build OIDC authorization URL.
@@ -44,6 +45,7 @@ def build_auth_url(
         code_challenge: PKCE code challenge
         scope: OAuth2 scopes
         acr_values: Authentication Context Class Reference values
+        prompt: OIDC prompt parameter (e.g., 'login' to force re-authentication)
 
     Returns:
         Authorization URL
@@ -59,6 +61,9 @@ def build_auth_url(
 
     if acr_values:
         params["acr_values"] = acr_values
+
+    if prompt:
+        params["prompt"] = prompt
 
     param_string = "&".join([f"{k}={requests.utils.quote(str(v))}" for k, v in params.items()])  # type: ignore
     return f"{authorization_endpoint}?{param_string}"
