@@ -5,6 +5,7 @@ def create_navigation_header(current_page: str):
         {'name': 'Home', 'path': '/', 'key': 'home'},
         {'name': 'Uitnodigingen', 'path': '/m/invitations', 'key': 'invitations'},
         {'name': 'Groepen', 'path': '/m/groups', 'key': 'groups'},
+        {'name': 'Accept', 'path': '/accept', 'key': 'accept'}
     ]
 
     active_classes = 'px-4 py-2 rounded bg-blue-500 text-white font-semibold'
