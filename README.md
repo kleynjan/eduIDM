@@ -61,8 +61,7 @@ Start de applicatie met `python main.py` en ga met je browser naar `http://local
 * POST terug naar de backend (al dan niet met SCIM). 
 * POST naar backend in aparte task onderbrengen i.v.m. retries.
 * Verzenden van uitnodiging per mail. 
-* Redirect/initiëren van tweede factor.
-* Allerlei denkbare verificaties (tweede login bij instelling, iDIN, affiliatie)
+* ACR's per stap configureerbaar ipv hard-coded.
 * Styling via SCSS i.p.v. random Tailwind noise
 
 ### License
