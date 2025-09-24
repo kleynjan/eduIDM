@@ -5,7 +5,7 @@ from services.storage import (
     create_invitation, get_all_invitations_with_details, get_all_groups
 )
 from services.logging import logger
-from utils.navigation import create_navigation_header
+from .nav_header import create_navigation_header
 
 TITLE = "Invitations"
 
@@ -49,7 +49,7 @@ def invitations_page():
                             ui.label(invitation['datetime_accepted_formatted']
                                      or '-').style('width:15%; text-align:left;')
 
-        ui.label(TITLE).classes('text-3xl font-bold mb-6')
+        ui.label(TITLE).classes('text-3xl font-bold')
         invitations_table()
         ui.button('Invite...', on_click=lambda: manual_invite_dialog(page_state)).classes('mb-4 bg-blue-500 text-white')
 

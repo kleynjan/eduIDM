@@ -2,6 +2,7 @@ from nicegui import ui
 
 def create_navigation_header(current_page: str):
     nav_items = [
+        {'name': 'Home', 'path': '/', 'key': 'home'},
         {'name': 'Uitnodigingen', 'path': '/m/invitations', 'key': 'invitations'},
         {'name': 'Groepen', 'path': '/m/groups', 'key': 'groups'},
     ]

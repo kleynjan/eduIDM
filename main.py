@@ -2,15 +2,15 @@ import logging
 import json
 import os
 
-from nicegui import ui
+from nicegui import ui, app
 
 import eduid_oidc.oidc_callback
 import routes.accept
 
 # register routes
 import routes.api
-import routes.groups
-import routes.invitations
+import routes.landing
+import routes.m         # all /m routes
 from services.logging import logger, setup_logging
 
 try:
@@ -31,6 +31,8 @@ setup_logging(
     level=LOG_LEVEL,
     enable_console_logging=CONSOLE_LOGGING
 )
+
+app.add_static_files('/img', 'img')
 
 # call this to run in production (from uvicorn)
 def run(fastapi_app) -> None:

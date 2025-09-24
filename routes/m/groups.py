@@ -4,7 +4,7 @@ from nicegui import ui
 
 from services.logging import logger
 from services.storage import create_group, delete_group, get_all_groups, update_group
-from utils.navigation import create_navigation_header
+from .nav_header import create_navigation_header
 
 TITLE = "Groepen"
 
@@ -50,7 +50,7 @@ def groups_page():
                                     on_click=lambda g=group: delete_group_dialog(g, page_state)
                                 ).props('flat dense').classes('text-red-500')
 
-        ui.label(TITLE).classes('text-3xl font-bold mb-6')
+        ui.label(TITLE).classes('text-3xl font-bold')
         groups_table()
         ui.button('Nieuwe Groep...', on_click=lambda: add_group_dialog(
             page_state)).classes('mb-4 bg-blue-500 text-white')
