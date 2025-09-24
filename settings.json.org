@@ -1,0 +1,6 @@
+{
+    "DTAP": "prod|test|dev",
+    "host": "localhost",
+    "port": 8085,
+    "storage_secret": "<your-secret-here>"
+}

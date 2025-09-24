@@ -1,13 +1,28 @@
 import logging
+import json
+import os
+
+from fastapi import FastAPI
 from nicegui import ui
-from services.logging import setup_logging, logger
+
+import eduid_oidc.oidc_callback
+import routes.accept
 
 # register routes
 import routes.api
-import routes.accept
-import routes.invitations
 import routes.groups
-import eduid_oidc.oidc_callback
+import routes.invitations
+from services.logging import logger, setup_logging
+
+fastapi_app = FastAPI()
+
+settings = json.load(open('settings.json'))
+DTAP, HOST, PORT, STORAGE_SECRET = (
+    settings.get('DTAP', 'dev'),
+    settings.get('host', 'localhost'),
+    settings.get('port', 8085),
+    settings.get('storage_secret', 'your-secret-here')
+)
 
 # Configure logging
 setup_logging(
@@ -16,6 +31,14 @@ setup_logging(
     enable_console_logging=True
 )
 
+# call this to run in production (from uvicorn)
+def run() -> None:
+    ui.run_with(fastapi_app, storage_secret=STORAGE_SECRET, title='eduIDM', prod_js=True)
+
 if __name__ in {"__main__", "__mp_main__"}:
-    logger.info("starting eduIDM on localhost:8080")
-    ui.run(host='localhost', port=8080, storage_secret="AbraXabra2452", title='eduIDM', show=False)
+    logger.info(f"Starting eduIDM on {HOST}:{PORT}")
+    if DTAP == "dev":
+        ui.run(host=HOST, port=PORT, storage_secret=STORAGE_SECRET, title='eduIDM', show=False)
+    else:
+        print(f"In production: run with 'uvicorn main:run --workers 1 --port {PORT}'")
+    run()

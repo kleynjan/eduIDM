@@ -50,12 +50,16 @@ git clone https://github.com/kleynjan/eduIDM.git .
 conda create -n eduidm python=3
 conda activate eduidm
 pip install -r requirements.txt
+cp config.json.org config.json
 ```
 
-Maak in je SP Dashboard een OIDC RP client endpoint aan en kopieer deze gegevens naar `config.json`
+Maak in je SP Dashboard een OIDC RP client endpoint aan en kopieer deze gegevens naar `config.json`. Pas ook de REDIRECT_URI aan.
 
-Start de applicatie met `python main.py` en ga met je browser naar `http://localhost:8080/invitations` of `http://localhost:8080/groups`
+Start de applicatie met `python main.py` en ga met je browser naar `http://localhost:8085/`
 
+### License
+
+This project is licensed under the GNU Affero General Public License (AGPL) version 3. 
 
 ### TODO
 * POST terug naar de backend (al dan niet met SCIM). 
