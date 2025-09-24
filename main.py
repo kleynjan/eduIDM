@@ -19,21 +19,16 @@ except Exception:
     settings = {}
     print("Warning: could not load settings.json; set storage_secret for production use!")
 
-DTAP, STORAGE_SECRET = (
+DTAP, STORAGE_SECRET, LOG_LEVEL, CONSOLE_LOGGING = (
     settings.get('DTAP', 'dev'),
-    settings.get('storage_secret', 'your-secret-here')
+    settings.get('storage_secret', 'your-secret-here'),
+    settings.get('log_level', 'INFO'),
+    settings.get('console_logging', False)
 )
 
-if DTAP == "dev":
-    LOG_LEVEL = logging.DEBUG
-    CONSOLE_LOGGING = True
-else:
-    LOG_LEVEL = logging.INFO
-    CONSOLE_LOGGING = False
-
 setup_logging(
-    level=LOG_LEVEL,
     log_file='eduidm.log',
+    level=LOG_LEVEL,
     enable_console_logging=CONSOLE_LOGGING
 )
 
