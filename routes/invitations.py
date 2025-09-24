@@ -101,12 +101,18 @@ def manual_invite_dialog(page_state):
             # Close the invite dialog
             invite_dialog.close()
 
-            # Show confirmation dialog
+            # Show success notification
+            ui.notify(f'Uitnodiging voor groep "{selected_group["name"]}" is aangemaakt', type='positive')
+
+            # Refresh the table
+            if 'refresh_function' in page_state:
+                page_state['refresh_function']()
+
+            # Show confirmation dialog with invitation details
             show_confirmation_dialog(
                 selected_group['name'],
                 dialog_state['invitation_mail_address'],
-                invitation_id,
-                page_state
+                invitation_id
             )
 
         except Exception as e:
@@ -151,20 +157,14 @@ def manual_invite_dialog(page_state):
     invite_dialog.open()
 
 
-def show_confirmation_dialog(group_name, email_address, invitation_id, page_state):
+def show_confirmation_dialog(group_name, email_address, invitation_id):
     """Show the confirmation dialog after successful invitation creation"""
     logger.info(f"Showing confirmation dialog for invitation: {invitation_id}")
 
     def handle_ok():
-        """Handle OK button click - refresh the invitations list"""
-        logger.info("Confirmation dialog closed, refreshing invitations list")
-
-        # Close dialog first
+        """Handle OK button click"""
+        logger.info("Confirmation dialog closed")
         confirmation_dialog.close()
-
-        # Refresh the table using the stored refresh function
-        if 'refresh_function' in page_state:
-            page_state['refresh_function']()
 
     with ui.dialog(value=True) as confirmation_dialog, ui.card().classes('w-96'):
         ui.label('Uitnodiging Aangemaakt').classes('text-xl font-bold mb-4')
@@ -172,5 +172,4 @@ def show_confirmation_dialog(group_name, email_address, invitation_id, page_stat
         ui.label(f'Uitnodiging voor group {group_name} wordt verstuurd naar {email_address}.').classes('mb-2')
         ui.label(f'Uitnodigingscode: {invitation_id}').classes('mb-4 font-mono text-sm')
 
-        ui.button('OK', on_click=handle_ok).classes('bg-blue-500 text-white w-full')
         ui.button('OK', on_click=handle_ok).classes('bg-blue-500 text-white w-full')
