@@ -1,5 +1,6 @@
 config.json
 settings.json
+storage.json
 
 # Python
 __pycache__/
