@@ -29,18 +29,21 @@ def load_eduid_config() -> Dict[str, Any]:
     return config
 
 
-def start_eduid_login(user_state: Dict[str, Any], acr_values: Optional[str] = None, force_login: bool = False):
+def start_oidc_login(user_state: Dict[str, Any], login_hint: Optional[str] = None, acr_values: Optional[str] = None, force_login: bool = False):
     """
-    Initiate eduID OIDC login flow and redirect to authorization server.
+    Initiate OIDC login flow and redirect to authorization server.
 
     Args:
         user_state: dictionary to carry oidc state data
+        login_hint: login hint for directing authentication to specific identity provider
         acr_values: optional ACR values to request specific authentication strength
         force_login: whether to force re-authentication (prompt=login)
     """
 
-    logger.info(
-        f"Starting eduID login process{' with ACR: ' + acr_values if acr_values else ''}{' (force_login=True)' if force_login else ''}")
+    hint_info = f" with login_hint: {login_hint}" if login_hint else ""
+    acr_info = f" with ACR: {acr_values}" if acr_values else ""
+    force_info = " (force_login=True)" if force_login else ""
+    logger.info(f"Starting OIDC login process{hint_info}{acr_info}{force_info}")
     config = load_eduid_config()
 
     try:
@@ -60,7 +63,8 @@ def start_eduid_login(user_state: Dict[str, Any], acr_values: Optional[str] = No
             redirect_uri=config['REDIRECT_URI'],
             code_challenge=code_challenge,
             acr_values=acr_values,
-            prompt=prompt
+            prompt=prompt,
+            login_hint=login_hint
         )
 
         logger.info(f"Authorization URL generated successfully, redirecting to: {auth_url}")
@@ -116,7 +120,14 @@ def complete_eduid_login(code: str, user_state: Dict[str, Any]):
     # update onboarding state
     onboarding_state = session_manager.state
     onboarding_state['eduid_userinfo'] = userinfo
-    onboarding_state['steps_completed']['eduid_login'] = True
+
+    if onboarding_state['steps_completed']['eduid_login']:
+        # This is step 3 - institutional login
+        onboarding_state['steps_completed']['mfa_verified'] = True
+        onboarding_state['steps_completed']['completed'] = True
+    else:
+        # This is step 2 - eduID login
+        onboarding_state['steps_completed']['eduid_login'] = True
 
     # update invitation
     current_invite_code = onboarding_state.get('invite_code')
@@ -137,3 +148,8 @@ def complete_eduid_login(code: str, user_state: Dict[str, Any]):
             logger.error(f"Failed to update invitation for invite_code: {current_invite_code}")
     else:
         logger.warning("No current invite_code found in onboarding state during eduID completion")
+
+
+def start_eduid_login(user_state: Dict[str, Any], acr_values: Optional[str] = None, force_login: bool = False):
+    """Backward compatibility wrapper for start_oidc_login with eduID hint"""
+    return start_oidc_login(user_state, login_hint="https://login.test.eduid.nl", acr_values=acr_values, force_login=force_login)

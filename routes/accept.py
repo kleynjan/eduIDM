@@ -2,7 +2,7 @@
 
 from nicegui import app, ui
 
-from eduid_oidc.app_interface import start_eduid_login
+from eduid_oidc.app_interface import start_eduid_login, start_oidc_login
 from services.logging import logger
 from services.scim_service import scim_provisioning
 from services.session_manager import session_manager
@@ -63,7 +63,7 @@ def accept_invitation(invite_code: str = ""):
     title = f"Uitnodiging - {suffix}" if suffix else "Uitnodiging"
     ui.page_title(title)
 
-    with ui.column().classes('max-w-4xl mx-auto p-6'):
+    with ui.column().classes('max-w-4xl mx-auto p-6').style('width: 800px;'):
         ui.label(f"Welkom bij {suffix}" if suffix else "Welkom").classes('text-3xl font-bold mb-2')
         ui.label('Volg het stappenplan hieronder om uw uitnodiging te accepteren.').classes('text-lg mb-6')
 
@@ -78,7 +78,7 @@ def accept_invitation(invite_code: str = ""):
             else:
                 ui.label('✓ Code ontvangen en bevestigd').classes('text-green-600 mt-2')
 
-        create_step_card(1, '1. Kopieer en plak hier de code die u heeft ontvangen',
+        create_step_card(1, 'Stap 1. Kopieer en plak hier de code die u heeft ontvangen',
                          state['steps_completed']['code_entered'], step1_content)
 
         # Step 2: eduID login
@@ -86,63 +86,92 @@ def accept_invitation(invite_code: str = ""):
             if state['invite_code'] and state['steps_completed']['code_entered']:
                 if not state['steps_completed']['eduid_login']:
                     with ui.column().classes('mt-2'):
-                        # ui.button('Inloggen met eduID', on_click=lambda x: start_eduid_login(
-                        #     app.storage.user, force_login=True)).classes('mr-4')
                         ui.button('Inloggen met eduID', on_click=lambda x: start_eduid_login(
-                            app.storage.user, force_login=False)).classes('mr-4')
+                            app.storage.user, force_login=True)).classes('mr-4')
+                        # ui.button('Inloggen met eduID', on_click=lambda x: start_eduid_login(
+                        #     app.storage.user, force_login=False)).classes('mr-4')
                         with ui.row().classes('items-center mt-2'):
                             ui.label('Nog geen eduID?').classes('text-sm')
                             ui.link('Maak hem hier aan', 'https://eduid.nl/home', new_tab=True).classes('text-sm ml-1')
                 else:
                     ui.label('✓ Ingelogd met eduID').classes('text-green-600 mt-2')
+                    userinfo = state.get('eduid_userinfo', {})
+                    if userinfo:
+                        with ui.expansion('Bekijk eduID attributen', icon='info').classes('mt-2'):
+                            with ui.column().classes('gap-1'):
+                                for key, value in userinfo.items():
+                                    if value:  # Only show non-empty values
+                                        ui.label(f'{key}: {value}').classes('text-sm')
+
             else:
                 ui.label('Voltooi eerst stap 1').classes('text-gray-500 mt-2')
 
-        create_step_card(2, '2. Klik hier om in te loggen met eduID',
+        create_step_card(2, 'Stap 2. Inloggen met eduID',
                          state['steps_completed']['eduid_login'], step2_content)
 
-        # Step 3: MFA Verification
+        # Step 3: Institutional Login
         def step3_content():
             if state['steps_completed']['eduid_login']:
-                userinfo = state.get('eduid_userinfo', {})
-                acr = userinfo.get('acr', '')
 
                 if state['steps_completed']['mfa_verified']:
-                    ui.label('✓ MFA is geconfigureerd').classes('text-green-600 mt-2')
+                    ui.label('✓ Institutioneel ingelogd').classes('text-green-600 mt-2')
                 else:
-                    # Check current ACR to determine if stronger authentication is needed
-                    acr_policy = 'https://refeds.org/profile/mfa'
-                    # acr_policy = 'https://eduid.nl/trust/linked-institution'
-                    if acr_policy in acr:
-                        # MFA already satisfied
-                        state['steps_completed']['mfa_verified'] = True
-                        state['steps_completed']['completed'] = True
-                        state['show_scim_dialog'] = True
-                        ui.navigate.to('/accept')
-                    else:
-                        # Need stronger authentication
-                        with ui.column().classes('mt-2'):
-                            ui.label('Sterke authenticatie is vereist voor deze stap.').classes('text-orange-600 mb-2')
-                            ui.button('Verifieer met sterke authenticatie',
-                                      on_click=lambda: start_eduid_login(
-                                          app.storage.user,
-                                          acr_values=acr_policy,
-                                          force_login=True
-                                      )).classes('bg-orange-500 text-white')
-                    ui.button('Skip (voor demo)',
-                              on_click=lambda: state['steps_completed'].update({'mfa_verified': True, 'completed': True}))
-                # Show eduID attributes if available
-                if userinfo:
-                    with ui.expansion('Bekijk eduID attributen', icon='info').classes('mt-2'):
-                        with ui.column().classes('gap-1'):
-                            for key, value in userinfo.items():
-                                if value:  # Only show non-empty values
-                                    ui.label(f'{key}: {value}').classes('text-sm')
+                    with ui.column().classes('mt-2'):
+                        ui.label('Log in via uw instelling om uw identiteit te verifiëren.').classes('text-gray-600 mb-2')
+                        ui.button('Inloggen via instelling',
+                                  on_click=lambda: start_oidc_login(
+                                      app.storage.user,
+                                      login_hint="https://idp.diy.surfconext.nl",
+                                      #   login_hint="https://idp.test.surfconext.nl",
+                                      force_login=True
+                                  )).classes('bg-blue-500 text-white')
+                        ui.button('Skip (voor demo)',
+                                  on_click=lambda: state['steps_completed'].update({'mfa_verified': True, 'completed': True}))
             else:
                 ui.label('Voltooi eerst stap 2').classes('text-gray-500 mt-2')
 
-        create_step_card(3, '3. MFA verificatie',
+        create_step_card(3, 'Stap 3. Inloggen met uw instellingsaccount',
                          state['steps_completed']['mfa_verified'], step3_content)
+
+        # # Step 3: MFA Verification -- to redo
+        # def step3_content():
+        #     if state['steps_completed']['eduid_login']:
+        #         userinfo = state.get('eduid_userinfo', {})
+        #         acr = userinfo.get('acr', '')
+
+        #         if state['steps_completed']['mfa_verified']:
+        #             ui.label('✓ MFA is geconfigureerd').classes('text-green-600 mt-2')
+        #         else:
+        #             # Check current ACR to determine if stronger authentication is needed
+        #             acr_policy = 'https://refeds.org/profile/mfa'
+        #             # acr_policy = 'https://eduid.nl/trust/linked-institution'
+        #             if acr_policy in acr:
+        #                 # MFA already satisfied
+        #                 state['steps_completed']['mfa_verified'] = True
+        #                 state['steps_completed']['completed'] = True
+        #                 state['show_scim_dialog'] = True
+        #                 ui.navigate.to('/accept')
+        #             else:
+        #                 # Need stronger authentication
+        #                 with ui.column().classes('mt-2'):
+        #                     ui.label('Sterke authenticatie is vereist voor deze stap.').classes('text-orange-600 mb-2')
+        #                     ui.button('Verifieer met sterke authenticatie',
+        #                               on_click=lambda: start_eduid_login(
+        #                                   app.storage.user,
+        #                                   acr_values=acr_policy,
+        #                                   force_login=True
+        #                               )).classes('bg-orange-500 text-white')
+        #             ui.button('Skip (voor demo)',
+        #                       on_click=lambda: state['steps_completed'].update({'mfa_verified': True, 'completed': True}))
+        #         # Show eduID attributes if available
+        #         if userinfo:
+        #             with ui.expansion('Bekijk eduID attributen', icon='info').classes('mt-2'):
+        #                 with ui.column().classes('gap-1'):
+        #                     for key, value in userinfo.items():
+        #                         if value:  # Only show non-empty values
+        #                             ui.label(f'{key}: {value}').classes('text-sm')
+        #     else:
+        #         ui.label('Voltooi eerst stap 2').classes('text-gray-500 mt-2')
 
         # Step 4: Completion
         def step4_content():
@@ -159,7 +188,7 @@ def accept_invitation(invite_code: str = ""):
             else:
                 ui.label('Voltooi eerst de vorige stappen').classes('text-gray-500 mt-2')
 
-        create_step_card(4, '4. Verificatie van uw identiteit',
+        create_step_card(4, 'Stap 4. Toegang naar de applicatie',
                          state['steps_completed']['completed'], step4_content)
 
         # Show SCIM provisioning dialog if flag is set

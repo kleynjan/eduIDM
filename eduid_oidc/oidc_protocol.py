@@ -33,7 +33,8 @@ def build_auth_url(
     code_challenge: str,
     scope: str = "openid profile email",
     acr_values: Optional[str] = None,
-    prompt: Optional[str] = None
+    prompt: Optional[str] = None,
+    login_hint: Optional[str] = None
 ) -> str:
     """
     Build OIDC authorization URL.
@@ -46,6 +47,7 @@ def build_auth_url(
         scope: OAuth2 scopes
         acr_values: Authentication Context Class Reference values
         prompt: OIDC prompt parameter (e.g., 'login' to force re-authentication)
+        login_hint: Login hint for directing authentication to specific identity provider
 
     Returns:
         Authorization URL
@@ -64,6 +66,9 @@ def build_auth_url(
 
     if prompt:
         params["prompt"] = prompt
+
+    if login_hint:
+        params["login_hint"] = login_hint
 
     param_string = "&".join([f"{k}={requests.utils.quote(str(v))}" for k, v in params.items()])  # type: ignore
     return f"{authorization_endpoint}?{param_string}"

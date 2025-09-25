@@ -14,9 +14,102 @@
             "guest_id": "kleijnp1",
             "invitation_mail_address": "peter.kleynjan@quantis.nl",
             "datetime_invited": "2025-09-04T09:50:18.460062Z",
-            "datetime_accepted": "",
+            "datetime_accepted": "2025-09-25T07:11:22.599545Z",
+            "eppn": "p0987743@pkuni.edu-example.cn",
+            "eduid_props": {
+                "acr": "urn:oasis:names:tc:SAML:2.0:ac:classes:PasswordProtectedTransport",
+                "eduperson_affiliation": [
+                    "member",
+                    "student"
+                ],
+                "eduperson_scoped_affiliation": [
+                    "member@math.pkuni.edu-example.cn",
+                    "student@pkuni.edu-example.cn"
+                ],
+                "email": "p0987743@pkuni.edu-example.cn",
+                "email_verified": true,
+                "family_name": "Ch'ien",
+                "given_name": "Li Qin",
+                "name": "Li Qin Ch'ien",
+                "schac_home_organization": "pkuni.edu-example.cn",
+                "sub": "ac76641d22e86730582ccf4d4ceda05c888e7b70",
+                "uids": [
+                    "p0987743"
+                ],
+                "updated_at": 1758784021
+            }
+        },
+        {
+            "invitation_id": "9821237bace44ba6a3dc6fd75f6f892f",
+            "guest_id": "jan123",
+            "group_id": "70e90d16-8b09-4241-899e-eb6334309117",
+            "invitation_mail_address": "jan@jansen.nl",
+            "datetime_invited": "2025-09-25T07:12:08.056906Z",
+            "datetime_accepted": "2025-09-25T07:12:26.977119Z",
             "eppn": "",
             "eduid_props": {}
+        },
+        {
+            "invitation_id": "4bb24ab9043542e68a5ea5e152af7bfa",
+            "guest_id": "jan1234",
+            "group_id": "70e90d16-8b09-4241-899e-eb6334309117",
+            "invitation_mail_address": "jan2",
+            "datetime_invited": "2025-09-25T07:12:44.928415Z",
+            "datetime_accepted": "2025-09-25T08:36:51.720629Z",
+            "eppn": "p0987743@pkuni.edu-example.cn",
+            "eduid_props": {
+                "acr": "urn:oasis:names:tc:SAML:2.0:ac:classes:PasswordProtectedTransport",
+                "eduperson_affiliation": [
+                    "member",
+                    "student"
+                ],
+                "eduperson_scoped_affiliation": [
+                    "member@math.pkuni.edu-example.cn",
+                    "student@pkuni.edu-example.cn"
+                ],
+                "email": "p0987743@pkuni.edu-example.cn",
+                "email_verified": true,
+                "family_name": "Ch'ien",
+                "given_name": "Li Qin",
+                "name": "Li Qin Ch'ien",
+                "schac_home_organization": "pkuni.edu-example.cn",
+                "sub": "ac76641d22e86730582ccf4d4ceda05c888e7b70",
+                "uids": [
+                    "p0987743"
+                ],
+                "updated_at": 1758789409
+            }
+        },
+        {
+            "invitation_id": "f46bfc6531634bc6a0d133697c975f3e",
+            "guest_id": "piet123",
+            "group_id": "70e90d16-8b09-4241-899e-eb6334309117",
+            "invitation_mail_address": "piet",
+            "datetime_invited": "2025-09-25T08:40:24.830078Z",
+            "datetime_accepted": "2025-09-25T08:41:17.942836Z",
+            "eppn": "p0987743@pkuni.edu-example.cn",
+            "eduid_props": {
+                "acr": "urn:oasis:names:tc:SAML:2.0:ac:classes:PasswordProtectedTransport",
+                "eduperson_affiliation": [
+                    "member",
+                    "student"
+                ],
+                "eduperson_scoped_affiliation": [
+                    "member@math.pkuni.edu-example.cn",
+                    "student@pkuni.edu-example.cn"
+                ],
+                "email": "p0987743@pkuni.edu-example.cn",
+                "email_verified": true,
+                "family_name": "Ch'ien",
+                "given_name": "Li Qin",
+                "name": "Li Qin Ch'ien",
+                "schac_home_organization": "pkuni.edu-example.cn",
+                "sub": "ac76641d22e86730582ccf4d4ceda05c888e7b70",
+                "uids": [
+                    "p0987743"
+                ],
+                "updated_at": 1758789675
+            }
         }
     ]
 }
