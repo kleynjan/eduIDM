@@ -78,7 +78,7 @@ def accept_invitation(invite_code: str = ""):
             else:
                 ui.label('✓ Code ontvangen en bevestigd').classes('text-green-600 mt-2')
 
-        create_step_card(1, '1. Kopieer en plak hier de code die u heeft ontvangen.',
+        create_step_card(1, '1. Kopieer en plak hier de code die u heeft ontvangen',
                          state['steps_completed']['code_entered'], step1_content)
 
         # Step 2: eduID login
@@ -86,10 +86,10 @@ def accept_invitation(invite_code: str = ""):
             if state['invite_code'] and state['steps_completed']['code_entered']:
                 if not state['steps_completed']['eduid_login']:
                     with ui.column().classes('mt-2'):
-                        ui.button('Inloggen met eduID', on_click=lambda x: start_eduid_login(
-                            app.storage.user, force_login=True)).classes('mr-4')
                         # ui.button('Inloggen met eduID', on_click=lambda x: start_eduid_login(
-                        #     app.storage.user, force_login=False)).classes('mr-4')
+                        #     app.storage.user, force_login=True)).classes('mr-4')
+                        ui.button('Inloggen met eduID', on_click=lambda x: start_eduid_login(
+                            app.storage.user, force_login=False)).classes('mr-4')
                         with ui.row().classes('items-center mt-2'):
                             ui.label('Nog geen eduID?').classes('text-sm')
                             ui.link('Maak hem hier aan', 'https://eduid.nl/home', new_tab=True).classes('text-sm ml-1')
@@ -98,7 +98,7 @@ def accept_invitation(invite_code: str = ""):
             else:
                 ui.label('Voltooi eerst stap 1').classes('text-gray-500 mt-2')
 
-        create_step_card(2, '2. Klik hier om in te loggen met eduID.',
+        create_step_card(2, '2. Klik hier om in te loggen met eduID',
                          state['steps_completed']['eduid_login'], step2_content)
 
         # Step 3: MFA Verification
@@ -129,7 +129,8 @@ def accept_invitation(invite_code: str = ""):
                                           acr_values=acr_policy,
                                           force_login=True
                                       )).classes('bg-orange-500 text-white')
-
+                    ui.button('Skip (voor demo)',
+                              on_click=lambda: state['steps_completed'].update({'mfa_verified': True, 'completed': True}))
                 # Show eduID attributes if available
                 if userinfo:
                     with ui.expansion('Bekijk eduID attributen', icon='info').classes('mt-2'):
@@ -140,11 +141,13 @@ def accept_invitation(invite_code: str = ""):
             else:
                 ui.label('Voltooi eerst stap 2').classes('text-gray-500 mt-2')
 
-        create_step_card(3, '3. MFA verificatie.',
+        create_step_card(3, '3. MFA verificatie',
                          state['steps_completed']['mfa_verified'], step3_content)
 
         # Step 4: Completion
         def step4_content():
+            # deze stap nog om te bouwen naar check op iDIN?
+            # bij voorkeur configureerbare lijst met ACR's...
             if state['steps_completed']['mfa_verified']:
                 mark_invitation_accepted(state['invite_code'])      # update datetime_accepted
                 with ui.column().classes('mt-2'):
@@ -156,7 +159,7 @@ def accept_invitation(invite_code: str = ""):
             else:
                 ui.label('Voltooi eerst de vorige stappen').classes('text-gray-500 mt-2')
 
-        create_step_card(4, '4. Gefeliciteerd, uw eduID is nu gekoppeld.',
+        create_step_card(4, '4. Verificatie van uw identiteit',
                          state['steps_completed']['completed'], step4_content)
 
         # Show SCIM provisioning dialog if flag is set
