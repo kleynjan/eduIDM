@@ -2,12 +2,124 @@
 
 from nicegui import ui
 from services.storage import (
-    create_invitation, get_all_invitations_with_details, get_all_groups
+    create_invitation, get_all_invitations_with_details, get_all_groups, find_group_by_id
 )
 from services.logging import logger
+from services.mail_service import create_mail
 from .nav_header import create_navigation_header
 
 TITLE = "Invitations"
+
+
+@ui.refreshable
+def invitations_table(page_state: dict):
+    logger.info("Rendering invitations table")
+    if not page_state['invitations']:
+        ui.label('Geen uitnodigingen gevonden.').classes('text-gray-500 text-center py-8')
+    else:
+        with ui.card().classes('w-full'):
+            # Table headers
+            with ui.row().classes('w-full font-bold border-b py-2'):
+                ui.label('groep').style('width:10%; text-align:left;')
+                ui.label('guest_id').style('width:10%; text-align:left;')
+                ui.label('code').style('width:35%; text-align:left;')
+                ui.label('uitgenodigd').style('width:15%; text-align:left;')
+                ui.label('geaccepteerd').style('width:15%; text-align:left;')
+
+            # Table rows
+            for invitation in page_state['invitations']:
+                with ui.row().classes('w-full border-b py-2'):
+                    ui.label(invitation['group_name']).style('width:10%; text-align:left;')
+                    ui.label(invitation['guest_id']).style('width:10%; text-align:left;')
+                    ui.label(invitation['invitation_id']).style('width:35%; text-align:left;')
+                    ui.label(invitation['datetime_invited_formatted']).style('width:15%; text-align:left;')
+                    ui.label(invitation['datetime_accepted_formatted']
+                             or '-').style('width:15%; text-align:left;')
+
+
+def manual_invite_dialog(page_state):
+    """Show unified dialog with invitation form and mail preview"""
+    logger.info("Opening invite dialog")
+
+    # Initialize content mode for reactive binding inside dialog
+    page_state['content_mode'] = 'invite'
+
+    dialog_state = {
+        'invitation_mail_address': '',
+        'guest_id': '',
+        'selected_group_id': ''
+    }
+
+    def create_and_send():
+        # Validate and create invitation
+        if not all([dialog_state['invitation_mail_address'].strip(),
+                   dialog_state['guest_id'].strip(),
+                   dialog_state['selected_group_id']]):
+            ui.notify('Alle velden zijn verplicht', type='negative')
+            return
+
+        try:
+            # Step 1: Close dialog first
+            main_dialog.close()
+
+            # Step 2: Create invitation
+            invitation_id = create_invitation(
+                dialog_state['guest_id'].strip(),
+                dialog_state['selected_group_id'],
+                dialog_state['invitation_mail_address'].strip()
+            )
+
+            # Step 3: Refresh data and table
+            page_state['invitations'] = get_all_invitations_with_details()
+            invitations_table.refresh()
+
+            # Step 4: Prepare mail content
+            page_state['mail_content'] = create_mail(invitation_id)
+            page_state['content_mode'] = 'mail_preview'
+
+            # Step 5: Reopen dialog with mail preview
+            ui.timer(0.1, lambda: main_dialog.open(), once=True)
+
+        except Exception as e:
+            logger.error(f"Failed to create invitation: {e}")
+            ui.notify(f'Fout: {str(e)}', type='negative')
+
+    def close_dialog():
+        main_dialog.close()
+
+    with ui.dialog() as main_dialog:
+        # Invitation form
+        with ui.card().classes('w-96').bind_visibility_from(page_state, 'content_mode',
+                                                            backward=lambda x: x == 'invite'):
+            ui.label('Nieuwe Uitnodiging').classes('text-xl font-bold mb-4')
+            ui.input('Email adres', placeholder='gebruiker@example.com').bind_value(dialog_state,
+                                                                                    'invitation_mail_address').classes('w-full mb-3')
+            ui.input('Guest ID', placeholder='guest123').bind_value(dialog_state, 'guest_id').classes('w-full mb-3')
+
+            group_options = {group['id']: group['name'] for group in page_state['groups']}
+            if group_options:
+                ui.select(options=group_options, label='Selecteer Groep', value=None).bind_value(
+                    dialog_state, 'selected_group_id').classes('w-full mb-4')
+
+            with ui.row().classes('w-full justify-end gap-2'):
+                ui.button('Annuleren', on_click=close_dialog).classes('bg-gray-500 text-white')
+                ui.button('Versturen', on_click=create_and_send).classes('bg-blue-500 text-white')
+
+        # Mail preview
+        with ui.card().classes('w-96').bind_visibility_from(page_state, 'content_mode',
+                                                            backward=lambda x: x == 'mail_preview'):
+            ui.label('Mail Preview').classes('text-xl font-bold mb-4')
+            ui.label().bind_text_from(page_state, 'mail_content',
+                                      backward=lambda x: f"Aan: {x['to']}" if x else '').classes('mb-2')
+            ui.label().bind_text_from(page_state, 'mail_content',
+                                      backward=lambda x: f"Onderwerp: {x['subject']}" if x else '').classes('mb-4')
+            ui.label().bind_text_from(page_state, 'mail_content',
+                                      backward=lambda x: x['body'] if x else '').classes('mb-4 whitespace-pre-line')
+            ui.button('Sluiten', on_click=close_dialog).classes('bg-blue-500 text-white w-full')
+
+    # Imperatively open the dialog
+    main_dialog.open()
+
 
 @ui.page('/m/invitations')
 def invitations_page():
@@ -15,164 +127,18 @@ def invitations_page():
 
     ui.page_title(TITLE)
 
-    # Create reactive state for the page
-    page_state = {'invitations': [{}], 'groups': get_all_groups()}
-
-    with ui.column().classes('mx-auto p-6').style('width:900px;'):
-        # Add navigation header
-        create_navigation_header('invitations')
-
-        # Invitations table
-        @ui.refreshable
-        def invitations_table():
-            page_state['invitations'] = get_all_invitations_with_details()
-
-            if not page_state['invitations']:
-                ui.label('Geen uitnodigingen gevonden.').classes('text-gray-500 text-center py-8')
-            else:
-                with ui.card().classes('w-full'):
-                    # Table headers
-                    with ui.row().classes('w-full font-bold border-b py-2'):
-                        ui.label('groep').style('width:10%; text-align:left;')
-                        ui.label('guest_id').style('width:10%; text-align:left;')
-                        ui.label('code').style('width:35%; text-align:left;')
-                        ui.label('uitgenodigd').style('width:15%; text-align:left;')
-                        ui.label('geaccepteerd').style('width:15%; text-align:left;')
-
-                    # Table rows
-                    for invitation in page_state['invitations']:
-                        with ui.row().classes('w-full border-b py-2'):
-                            ui.label(invitation['group_name']).style('width:10%; text-align:left;')
-                            ui.label(invitation['guest_id']).style('width:10%; text-align:left;')
-                            ui.label(invitation['invitation_id']).style('width:35%; text-align:left;')
-                            ui.label(invitation['datetime_invited_formatted']).style('width:15%; text-align:left;')
-                            ui.label(invitation['datetime_accepted_formatted']
-                                     or '-').style('width:15%; text-align:left;')
-
-        ui.label(TITLE).classes('text-3xl font-bold')
-        invitations_table()
-        ui.button('Invite...', on_click=lambda: manual_invite_dialog(page_state)).classes('mb-4 bg-blue-500 text-white')
-
-        # Store reference to refresh function for later use
-        page_state['refresh_function'] = invitations_table.refresh
-
-
-def manual_invite_dialog(page_state):
-    """Show the invitation dialog"""
-    logger.info("Opening invite dialog")
-
-    # Dialog state
-    dialog_state = {
-        'invitation_mail_address': '',
-        'guest_id': '',
-        'selected_group_id': ''
+    page_state = {
+        'invitations': get_all_invitations_with_details(),
+        'groups': get_all_groups(),
+        'mail_content': None
     }
 
-    def handle_invite():
-        """Handle the invite button click"""
-        logger.info("Processing invitation creation")
+    with ui.column().classes('mx-auto p-6').style('width:900px;'):
+        create_navigation_header('invitations')
 
-        # Validate inputs
-        if not dialog_state['invitation_mail_address'].strip():
-            ui.notify('Email adres is verplicht', type='negative')
-            return
+        ui.label(TITLE).classes('text-3xl font-bold')
+        invitations_table(page_state)
+        ui.button('Invite...', on_click=lambda: manual_invite_dialog(page_state)).classes('mb-4 bg-blue-500 text-white')
 
-        if not dialog_state['guest_id'].strip():
-            ui.notify('Guest ID is verplicht', type='negative')
-            return
-
-        if not dialog_state['selected_group_id']:
-            ui.notify('Selecteer een groep', type='negative')
-            return
-
-        try:
-            # Create the invitation
-            invitation_id = create_invitation(
-                dialog_state['guest_id'].strip(),
-                dialog_state['selected_group_id'],
-                dialog_state['invitation_mail_address'].strip()
-            )
-
-            # Find group name for confirmation
-            groups = [group for group in page_state['groups'] if group['id'] == dialog_state['selected_group_id']]
-            if not groups:
-                raise Exception("Selected group not found")
-            selected_group = groups[0]
-
-            logger.info(f"Invitation created successfully: {invitation_id}")
-
-            # Close the invite dialog
-            invite_dialog.close()
-
-            # Show success notification
-            ui.notify(f'Uitnodiging voor groep "{selected_group["name"]}" is aangemaakt', type='positive')
-
-            # Refresh the table
-            if 'refresh_function' in page_state:
-                page_state['refresh_function']()
-
-            # Show confirmation dialog with invitation details
-            show_confirmation_dialog(
-                selected_group['name'],
-                dialog_state['invitation_mail_address'],
-                invitation_id
-            )
-
-        except Exception as e:
-            logger.error(f"Failed to create invitation: {e}")
-            ui.notify(f'Fout bij het aanmaken van uitnodiging: {str(e)}', type='negative')
-
-    def handle_cancel():
-        """Handle the cancel button click"""
-        logger.info("Invite dialog cancelled")
-        invite_dialog.close()
-
-    # Create the dialog
-    with ui.dialog() as invite_dialog, ui.card().classes('w-96'):
-        ui.label('Nieuwe Uitnodiging').classes('text-xl font-bold mb-4')
-
-        # Email input
-        ui.input('Email adres', placeholder='gebruiker@example.com').bind_value(
-            dialog_state, 'invitation_mail_address'
-        ).classes('w-full mb-3')
-
-        # Guest ID input
-        ui.input('Guest ID', placeholder='guest123').bind_value(
-            dialog_state, 'guest_id'
-        ).classes('w-full mb-3')
-
-        # Group selection
-        group_options = {group['id']: group['name'] for group in page_state['groups']}
-        if group_options:
-            ui.select(
-                options=group_options,
-                label='Selecteer Groep',
-                value=None
-            ).bind_value(dialog_state, 'selected_group_id').classes('w-full mb-4')
-        else:
-            ui.label('Geen groepen beschikbaar').classes('text-red-500 mb-4')
-
-        # Buttons
-        with ui.row().classes('w-full justify-end gap-2'):
-            ui.button('Cancel', on_click=handle_cancel).classes('bg-gray-500 text-white')
-            ui.button('Invite', on_click=handle_invite).classes('bg-blue-500 text-white')
-
-    invite_dialog.open()
-
-
-def show_confirmation_dialog(group_name, email_address, invitation_id):
-    """Show the confirmation dialog after successful invitation creation"""
-    logger.info(f"Showing confirmation dialog for invitation: {invitation_id}")
-
-    def handle_ok():
-        """Handle OK button click"""
-        logger.info("Confirmation dialog closed")
-        confirmation_dialog.close()
-
-    with ui.dialog(value=True) as confirmation_dialog, ui.card().classes('w-96'):
-        ui.label('Uitnodiging Aangemaakt').classes('text-xl font-bold mb-4')
-
-        ui.label(f'Uitnodiging voor group {group_name} wordt verstuurd naar {email_address}.').classes('mb-2')
-        ui.label(f'Uitnodigingscode: {invitation_id}').classes('mb-4 font-mono text-sm')
-
-        ui.button('OK', on_click=handle_ok).classes('bg-blue-500 text-white w-full')
+        # # Store reference to refresh function for later use
+        # page_state['refresh_function'] = invitations_table.refresh
