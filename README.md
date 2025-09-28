@@ -29,8 +29,8 @@ Interactief:
 | URL                       |                                                                  |
 |---------------------------|------------------------------------------------------------------|
 | /accept/{invitation_id}   | Start onboarding na ontvangst van invitation_id (per mail bv.)   |
-| /invitations              | Bekijk uitnodigingen + interactief aanmaken van nieuwe           |
-| /groups                   | Beheer groepen                                                   |
+| /m/invitations            | Bekijk uitnodigingen + interactief aanmaken van nieuwe           |
+| /m/groups                 | Beheer groepen                                                   |
 
 Voor deze PoC wordt de data opgeslagen in (services.storage.) storage.json en kan daar direct worden bewonderd en aangepast. Voor een productie-app ligt een database meer voor de hand.
 
@@ -38,7 +38,9 @@ Voor deze PoC wordt de data opgeslagen in (services.storage.) storage.json en ka
 
 SURF Invite lijkt zich te ontwikkelen tot een RBAC-tool, met als uitgangspunt dat het **volledige** autorisatiepakket voor gasten meegegeven kan worden in rollen -- en dat het dus niet nodig is om de eduID-identiteit te relateren aan een interne identiteit.
 
-Hier kiezen we een ander vertrekpunt, nl. dat het cruciaal is om die relatie tussen interne identiteiten en eduID's wél te kunnen leggen. Behalve deze matching van identiteiten zorgt de self-service pagina ervoor dat de externe *gebruiker* een goede 'onboarding' ervaring heeft en dat de *instelling* zekerheid heeft wie er inlogt.  
+Hier kiezen we een ander vertrekpunt, nl. dat het cruciaal is om die relatie tussen interne identiteiten en eduID's wél te kunnen leggen. Behalve deze matching van identiteiten zorgt de self-service pagina ervoor dat de externe *gebruiker* een goede 'onboarding' ervaring heeft en dat de *instelling* zekerheid heeft wie er inlogt. 
+
+De link tussen instellingsaccount en eduID die hier wordt vastgelegd zou vervolgens overigens kunnen worden gebruikt om via de <a href="https://servicedesk.surf.nl/wiki/spaces/IAM/pages/222462401/Ondersteuning+voor+applicaties+zonder+multi-identifier+functionaliteit">instellings-informatie API</a> de eduID mee te geven bij het inloggen, naast de instellingsaccount. Dat maakt integratie van eduID in het applicatielandschap aanzienlijk eenvoudiger (vgl. anyID/keyring scenario van Aventus).
 
 <img src="screenshot.png" alt="screenshot" width="400" style="float:right;"/>
 
@@ -53,16 +55,17 @@ pip install -r requirements.txt
 cp config.json.org config.json
 ```
 
-Maak in je SP Dashboard een OIDC RP client endpoint aan en kopieer deze gegevens naar `config.json`. Pas ook de REDIRECT_URI aan.
+Maak in je SP Dashboard een OIDC RP client endpoint aan en kopieer deze gegevens naar `config.json`. Check ook de REDIRECT_URI.
 
 Start de applicatie met `python main.py` en ga met je browser naar `http://localhost:8085/`
 
 ### TODO
 * POST terug naar de backend (al dan niet met SCIM). 
 * POST naar backend in aparte task onderbrengen i.v.m. retries.
-* Verzenden van uitnodiging per mail. 
-* ACR's per stap configureerbaar ipv hard-coded.
+* Unit tests.
 * Styling via SCSS i.p.v. random Tailwind noise
+* Later: mail templates & verzenden van uitnodiging per mail (SES?). 
+* Later: stappenplan per groep configureerbaar ipv hard-coded.
 
 ### License
 This project is licensed under the GNU Affero General Public License (AGPL) version 3. 
