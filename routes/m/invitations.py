@@ -8,7 +8,10 @@ from services.logging import logger
 from services.mail_service import create_mail
 from .nav_header import create_navigation_header
 
-TITLE = "Invitations"
+TITLE = "Uitnodigingen"
+
+# Global reference for dialog management
+current_dialog = None
 
 
 @ui.refreshable
@@ -17,24 +20,23 @@ def invitations_table(page_state: dict):
     if not page_state['invitations']:
         ui.label('Geen uitnodigingen gevonden.').classes('text-gray-500 text-center py-8')
     else:
-        with ui.card().classes('w-full'):
+        with ui.card().classes('w-full').style('font-size: 12pt;'):
             # Table headers
             with ui.row().classes('w-full font-bold border-b py-2'):
-                ui.label('groep').style('width:10%; text-align:left;')
-                ui.label('guest_id').style('width:10%; text-align:left;')
-                ui.label('code').style('width:35%; text-align:left;')
-                ui.label('uitgenodigd').style('width:15%; text-align:left;')
-                ui.label('geaccepteerd').style('width:15%; text-align:left;')
+                ui.label('groep').style('width:15%;')
+                ui.label('mailadres').style('width:20%;')
+                ui.label('code').style('width:25%;')
+                ui.label('uitgenodigd').style('width:15%;')
+                ui.label('geaccepteerd').style('width:15%;')
 
             # Table rows
             for invitation in page_state['invitations']:
                 with ui.row().classes('w-full border-b py-2'):
-                    ui.label(invitation['group_name']).style('width:10%; text-align:left;')
-                    ui.label(invitation['guest_id']).style('width:10%; text-align:left;')
-                    ui.label(invitation['invitation_id']).style('width:35%; text-align:left;')
-                    ui.label(invitation['datetime_invited_formatted']).style('width:15%; text-align:left;')
-                    ui.label(invitation['datetime_accepted_formatted']
-                             or '-').style('width:15%; text-align:left;')
+                    ui.label(invitation['group_name']).style('width:15%;')
+                    ui.label(invitation['invitation_mail_address']).style('width:20%;')
+                    ui.label(invitation['invitation_id']).style('width:25%;')
+                    ui.label(invitation['datetime_invited_formatted']).style('width:15%;')
+                    ui.label(invitation['datetime_accepted_formatted'] or '-').style('width:15%;')
 
 
 def manual_invite_dialog(page_state):
@@ -87,10 +89,10 @@ def manual_invite_dialog(page_state):
     def close_dialog():
         main_dialog.close()
 
-    with ui.dialog() as main_dialog:
+    with ui.dialog().props('full-width') as main_dialog:
         # Invitation form
-        with ui.card().classes('w-96').bind_visibility_from(page_state, 'content_mode',
-                                                            backward=lambda x: x == 'invite'):
+        with ui.card().style('width:760px !important;').bind_visibility_from(page_state, 'content_mode',
+                                                                             backward=lambda x: x == 'invite'):
             ui.label('Nieuwe Uitnodiging').classes('text-xl font-bold mb-4')
             ui.input('Email adres', placeholder='gebruiker@example.com').bind_value(dialog_state,
                                                                                     'invitation_mail_address').classes('w-full mb-3')
@@ -102,12 +104,12 @@ def manual_invite_dialog(page_state):
                     dialog_state, 'selected_group_id').classes('w-full mb-4')
 
             with ui.row().classes('w-full justify-end gap-2'):
-                ui.button('Annuleren', on_click=close_dialog).classes('bg-gray-500 text-white')
-                ui.button('Versturen', on_click=create_and_send).classes('bg-blue-500 text-white')
+                ui.button('Annuleren', on_click=close_dialog).classes('bg-gray-500')
+                ui.button('Versturen', on_click=create_and_send).classes('bg-blue-500')
 
         # Mail preview
-        with ui.card().classes('w-96').bind_visibility_from(page_state, 'content_mode',
-                                                            backward=lambda x: x == 'mail_preview'):
+        with ui.card().style('width: 960px !important;').bind_visibility_from(page_state, 'content_mode',
+                                                                              backward=lambda x: x == 'mail_preview'):
             ui.label('Mail Preview').classes('text-xl font-bold mb-4')
             ui.label().bind_text_from(page_state, 'mail_content',
                                       backward=lambda x: f"Aan: {x['to']}" if x else '').classes('mb-2')
@@ -115,7 +117,7 @@ def manual_invite_dialog(page_state):
                                       backward=lambda x: f"Onderwerp: {x['subject']}" if x else '').classes('mb-4')
             ui.label().bind_text_from(page_state, 'mail_content',
                                       backward=lambda x: x['body'] if x else '').classes('mb-4 whitespace-pre-line')
-            ui.button('Sluiten', on_click=close_dialog).classes('bg-blue-500 text-white w-full')
+            ui.button('Sluiten', on_click=close_dialog).classes('bg-blue-500 w-full')
 
     # Imperatively open the dialog
     main_dialog.open()
@@ -133,12 +135,13 @@ def invitations_page():
         'mail_content': None
     }
 
-    with ui.column().classes('mx-auto p-6').style('width:900px;'):
+    with ui.column().classes('mx-auto p-6').style('width:1200px;'):
         create_navigation_header('invitations')
 
-        ui.label(TITLE).classes('text-3xl font-bold')
         invitations_table(page_state)
-        ui.button('Invite...', on_click=lambda: manual_invite_dialog(page_state)).classes('mb-4 bg-blue-500 text-white')
+        ui.button('Nieuwe uitnodiging...', on_click=lambda: manual_invite_dialog(page_state)).classes('mb-4')
 
+        # # Store reference to refresh function for later use
+        # page_state['refresh_function'] = invitations_table.refresh
         # # Store reference to refresh function for later use
         # page_state['refresh_function'] = invitations_table.refresh

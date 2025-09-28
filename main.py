@@ -30,6 +30,12 @@ setup_logging(
 
 app.add_static_files('/img', 'img')
 
+# repairing butt ugly Quasar/Material defaults
+ui.button.default_props('no-caps')
+ui.button.default_style('color:white; font-size:14pt;')
+ui.button.__init__.__kwdefaults__['color'] = '#3b82f6'  # type: ignore
+ui.label.default_style('text-align: left;')
+
 # call this to run in production (from uvicorn)
 def run(fastapi_app) -> None:
     ui.run_with(fastapi_app, storage_secret=STORAGE_SECRET, title='eduIDM', prod_js=True)

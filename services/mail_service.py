@@ -23,23 +23,24 @@ def create_mail(invite_code: str):
         f"Creating mail content for guest_id: {invitation.get('guest_id')} to {invitation.get('invitation_mail_address')}")
 
     # Create mail content
-    body = f"""Geachte,
-
-U bent uitgenodigd om deel te nemen aan de groep "{group_name}" via eduIDM.
-
-Guest ID: {invitation.get('guest_id', 'N/A')}
-Uitnodigingscode: {invite_code}
+    body = f"""Geachte collega,
+    
+U bent uitgenodigd als "{group_name}".
 
 Klik op onderstaande link om de uitnodiging te accepteren:
-http://localhost:8080/accept?code={invite_code}
+<a href="http://uva.eduidm.nl/accept?code={invite_code}">http://uva.eduidm.nl/accept?code={invite_code}</a>
+
+Of ga naar http://uva.eduidm.nl/accept en kopieer en plak daar deze code:
+    {invite_code}
 
 Met vriendelijke groet,
-Het eduIDM Team"""
+ICT Ondersteuning
+Universitaire PABO Universiteit van Amsterdam"""
 
     mail_content = {
         'to': invitation.get('invitation_mail_address', 'N/A'),
-        'from': 'noreply@eduidm.nl',
-        'subject': 'Uitnodiging voor eduIDM',
+        'from': 'icto_upva_someone@uva.nl',
+        'subject': f'Uitnodiging als {group_name} voor de Universiteit van Amsterdam',
         'body': body
     }
 

@@ -2,7 +2,7 @@
     "groups": [
         {
             "id": "70e90d16-8b09-4241-899e-eb6334309117",
-            "name": "UPvA",
+            "name": "Gastdocent UPvA",
             "redirect_url": "https://canvas.uva.nl/",
             "redirect_text": "Canvas (UvA)"
         }
@@ -14,66 +14,6 @@
             "guest_id": "kleijnp1",
             "invitation_mail_address": "peter.kleynjan@quantis.nl",
             "datetime_invited": "2025-09-04T09:50:18.460062Z",
-            "datetime_accepted": "",
-            "eppn": "",
-            "eduid_props": {}
-        },
-        {
-            "invitation_id": "45c9b07c909b48848e687d3f7e3edc44",
-            "guest_id": "thisisme",
-            "group_id": "70e90d16-8b09-4241-899e-eb6334309117",
-            "invitation_mail_address": "peter@xl.nl",
-            "datetime_invited": "2025-09-27T19:44:22.584151Z",
-            "datetime_accepted": "",
-            "eppn": "",
-            "eduid_props": {}
-        },
-        {
-            "invitation_id": "7172b70d264f476b9ab4fb79ee703d14",
-            "guest_id": "adsasd",
-            "group_id": "70e90d16-8b09-4241-899e-eb6334309117",
-            "invitation_mail_address": "adsasd",
-            "datetime_invited": "2025-09-27T19:47:19.590871Z",
-            "datetime_accepted": "",
-            "eppn": "",
-            "eduid_props": {}
-        },
-        {
-            "invitation_id": "1552b56aefea476faaca4eacbf9e40f1",
-            "guest_id": "sadasdads",
-            "group_id": "70e90d16-8b09-4241-899e-eb6334309117",
-            "invitation_mail_address": "sadasddas",
-            "datetime_invited": "2025-09-27T20:25:25.543935Z",
-            "datetime_accepted": "",
-            "eppn": "",
-            "eduid_props": {}
-        },
-        {
-            "invitation_id": "34065f99c67643adaceb61e76ff7d2e6",
-            "guest_id": "erreerteretrter",
-            "group_id": "70e90d16-8b09-4241-899e-eb6334309117",
-            "invitation_mail_address": "terertertertter",
-            "datetime_invited": "2025-09-27T20:26:19.221231Z",
-            "datetime_accepted": "",
-            "eppn": "",
-            "eduid_props": {}
-        },
-        {
-            "invitation_id": "6cc87959f3214449a236e3cabf5aed65",
-            "guest_id": "321312132",
-            "group_id": "70e90d16-8b09-4241-899e-eb6334309117",
-            "invitation_mail_address": "2133212",
-            "datetime_invited": "2025-09-27T20:27:37.790108Z",
-            "datetime_accepted": "",
-            "eppn": "",
-            "eduid_props": {}
-        },
-        {
-            "invitation_id": "8ec7a7fdd76e4623822cab374268e882",
-            "guest_id": "Abraham",
-            "group_id": "70e90d16-8b09-4241-899e-eb6334309117",
-            "invitation_mail_address": "O#I@O#I@O",
-            "datetime_invited": "2025-09-27T20:32:45.618436Z",
             "datetime_accepted": "",
             "eppn": "",
             "eduid_props": {}

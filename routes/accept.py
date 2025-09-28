@@ -86,15 +86,16 @@ def accept_invitation(invite_code: str = ""):
             if state['invite_code'] and state['steps_completed']['code_entered']:
                 if not state['steps_completed']['eduid_login']:
                     with ui.column().classes('mt-2'):
-                        ui.button('Inloggen met eduID', on_click=lambda x: start_eduid_login(
+                        ui.button('Inloggen met (test!) eduID', on_click=lambda x: start_eduid_login(
                             app.storage.user, force_login=True)).classes('mr-4')
                         # ui.button('Inloggen met eduID', on_click=lambda x: start_eduid_login(
                         #     app.storage.user, force_login=False)).classes('mr-4')
                         with ui.row().classes('items-center mt-2'):
-                            ui.label('Nog geen eduID?').classes('text-sm')
-                            ui.link('Maak hem hier aan', 'https://eduid.nl/home', new_tab=True).classes('text-sm ml-1')
+                            ui.label('Nog geen test-eduID?').classes('text-sm')
+                            ui.link('Maak hem hier aan', 'https://test.eduid.nl/home',
+                                    new_tab=True).classes('text-sm ml-1')
                 else:
-                    ui.label('✓ Ingelogd met eduID').classes('text-green-600 mt-2')
+                    ui.label('✓ Ingelogd met (test-)eduID').classes('text-green-600 mt-2')
                     userinfo = state.get('eduid_userinfo', {})
                     if userinfo:
                         with ui.expansion('Bekijk eduID attributen', icon='info').classes('mt-2'):
@@ -106,7 +107,7 @@ def accept_invitation(invite_code: str = ""):
             else:
                 ui.label('Voltooi eerst stap 1').classes('text-gray-500 mt-2')
 
-        create_step_card(2, 'Stap 2. Inloggen met eduID',
+        create_step_card(2, 'Stap 2. Inloggen met test-eduID',
                          state['steps_completed']['eduid_login'], step2_content)
 
         # Step 3: Institutional Login
@@ -114,23 +115,21 @@ def accept_invitation(invite_code: str = ""):
             if state['steps_completed']['eduid_login']:
 
                 if state['steps_completed']['mfa_verified']:
-                    ui.label('✓ Institutioneel ingelogd').classes('text-green-600 mt-2')
+                    ui.label('✓ Institutioneel ingelogd (test-IDP)').classes('text-green-600 mt-2')
                 else:
                     with ui.column().classes('mt-2'):
-                        ui.label('Log in via uw instelling om uw identiteit te verifiëren.').classes('text-gray-600 mb-2')
-                        ui.button('Inloggen via instelling',
+                        ui.label('Log in via test-IDP om uw instellingsidentiteit te verifiëren.').classes('text-gray-600 mb-2')
+                        ui.button('Inloggen via (dummy) instelling',
                                   on_click=lambda: start_oidc_login(
                                       app.storage.user,
                                       login_hint="https://idp.diy.surfconext.nl",
                                       #   login_hint="https://idp.test.surfconext.nl",
                                       force_login=True
                                   )).classes('bg-blue-500 text-white')
-                        ui.button('Skip (voor demo)',
-                                  on_click=lambda: state['steps_completed'].update({'mfa_verified': True, 'completed': True}))
             else:
                 ui.label('Voltooi eerst stap 2').classes('text-gray-500 mt-2')
 
-        create_step_card(3, 'Stap 3. Inloggen met uw instellingsaccount',
+        create_step_card(3, 'Stap 3. Inloggen met (dummy) instellingsaccount',
                          state['steps_completed']['mfa_verified'], step3_content)
 
         # # Step 3: MFA Verification -- to redo

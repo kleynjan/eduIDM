@@ -15,7 +15,7 @@ def groups_page():
     ui.page_title(TITLE)
     page_state = {'groups': []}
 
-    with ui.column().classes('mx-auto p-6').style('width:900px;'):
+    with ui.column().classes('mx-auto p-6').style('width:1160px;'):
         # Add navigation header
         create_navigation_header('groups')
 
@@ -26,31 +26,29 @@ def groups_page():
             if not page_state['groups']:
                 ui.label('Geen groepen gevonden.').classes('text-gray-500 text-center py-8')
             else:
-                with ui.card().classes('w-full'):
+                with ui.card().classes('w-full').style('font-size: 12pt;'):
                     # Table headers
                     with ui.row().classes('w-full font-bold border-b pb-2 mb-2'):
-                        ui.label('Naam').classes('flex-1')
-                        ui.label('Redirect URL').classes('flex-2')
-                        ui.label('Redirect Text').classes('flex-1')
-                        ui.label('Acties').classes('w-32')
+                        ui.label('naam').style('width: 20%;')
+                        ui.label('redirect URL').style('width: 30%;')
+                        ui.label('redirect text').style('width: 30%;')
 
                     # Table rows
                     for group in page_state['groups']:
-                        with ui.row().classes('w-full border-b py-2 items-center'):
-                            ui.label(group['name']).classes('flex-1')
-                            ui.label(group['redirect_url']).classes('flex-2 text-sm')
-                            ui.label(group['redirect_text']).classes('flex-1')
-                            with ui.row().classes('w-32 gap-2'):
+                        with ui.row().classes('w-full border-b py-2'):
+                            ui.label(group['name']).style('width: 20%;')
+                            ui.label(group['redirect_url']).style('width: 30%;')
+                            ui.label(group['redirect_text']).style('width: 30%;')
+                            with ui.row().classes('gap-2').style('width: 15%;'):
                                 ui.button(
-                                    icon='edit',
+                                    icon='edit', color='grey',
                                     on_click=lambda g=group: edit_group_dialog(g, page_state)
-                                ).props('flat dense').classes('text-blue-500')
+                                ).props('flat dense').classes('text-grey-300')
                                 ui.button(
-                                    icon='delete',
+                                    icon='delete', color='grey',
                                     on_click=lambda g=group: delete_group_dialog(g, page_state)
-                                ).props('flat dense').classes('text-red-500')
+                                ).props('flat dense').classes('text-grey-300')
 
-        ui.label(TITLE).classes('text-3xl font-bold')
         groups_table()
         ui.button('Nieuwe Groep...', on_click=lambda: add_group_dialog(
             page_state)).classes('mb-4 bg-blue-500 text-white')
