@@ -38,11 +38,11 @@ Voor deze PoC wordt de data opgeslagen in (services.storage.) storage.json en ka
 
 SURF Invite lijkt zich te ontwikkelen tot een RBAC-tool, met als uitgangspunt dat het **volledige** autorisatiepakket voor gasten meegegeven kan worden in rollen -- en dat het dus niet nodig is om de eduID-identiteit te relateren aan een interne identiteit.
 
-Hier kiezen we een ander vertrekpunt, nl. dat het cruciaal is om die relatie tussen interne identiteiten en eduID's wél te kunnen leggen. Behalve deze matching van identiteiten zorgt de self-service pagina ervoor dat de externe *gebruiker* een goede 'onboarding' ervaring heeft en dat de *instelling* zekerheid heeft wie er inlogt. 
-
-De link tussen instellingsaccount en eduID die hier wordt vastgelegd zou vervolgens kunnen worden gebruikt om via de <a href="https://servicedesk.surf.nl/wiki/spaces/IAM/pages/222462401/Ondersteuning+voor+applicaties+zonder+multi-identifier+functionaliteit">instellings-informatie API</a> het instellingsaccount mee te geven bij het inloggen. Dat maakt integratie van eduID in het applicatielandschap aanzienlijk eenvoudiger (vgl. anyID/keyring scenario van Aventus).
+Hier kiezen we een ander vertrekpunt, nl. dat het cruciaal is om die relatie tussen interne identiteiten en eduID's wél te kunnen leggen. De self-service pagina zorgt ervoor dat de *instelling* zekerheid heeft wie er precies straks met eduID inlogt en bovendien dat de externe *gebruiker* een goede 'onboarding' ervaring heeft:
 
 <img src="screenshot.png" alt="screenshot" width="400" style="float:right;"/>
+
+Toekomstmuziek: de link tussen instellingsaccount en eduID die hier wordt vastgelegd zou vervolgens kunnen worden gebruikt om via de <a href="https://servicedesk.surf.nl/wiki/spaces/IAM/pages/222462401/Ondersteuning+voor+applicaties+zonder+multi-identifier+functionaliteit">instellings-informatie API</a> het instellingsaccount mee te geven bij het inloggen. Dat maakt integratie van eduID in het applicatielandschap aanzienlijk eenvoudiger (vgl. anyID/keyring scenario van Aventus).
 
 ### Installatie
 
