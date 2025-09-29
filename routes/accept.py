@@ -64,7 +64,7 @@ def accept_invitation(invite_code: str = ""):
     ui.page_title(title)
 
     with ui.column().classes('max-w-4xl mx-auto p-6').style('width: 800px;'):
-        ui.label(f"Welkom bij {suffix}" if suffix else "Welkom").classes('text-3xl font-bold mb-2')
+        ui.label(f"Welkom als {suffix}" if suffix else "Welkom").classes('text-3xl font-bold mb-2')
         ui.label('Volg het stappenplan hieronder om uw uitnodiging te accepteren.').classes('text-lg mb-6')
 
         # Step 1: Code input
